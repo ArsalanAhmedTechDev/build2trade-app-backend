@@ -26,12 +26,13 @@ const {
   getPolicyDetails,
   getModuleNameFromLanguage,
   getResponseMsgsFromLanguage,
+  verifyGoogleIdToken, 
+  verifyAppleIdToken
 } = require("../../helpers/utils");
 const externalApiCall = require("../../helpers/external-api-call");
-
 // module name
-// const moduleName = "Authentication";
-let moduleName;
+const moduleName = "Authentication";
+// let moduleName;
 let responseMsgs;
 var lang = "english";
 
@@ -44,6 +45,473 @@ module.exports = {
   customerExist,
   loginCheck,
 };
+
+/** register user and generate access token **/
+/**
+ * @route   POST /api/auth/signup
+ * @desc    Register a new user (manual or social: Google/Apple)
+ * @access  Public
+ *
+ * @request (Manual Sign-up)
+ * {
+ *   "fullName": "Ali",
+ *   "phoneNumber": "03123456789",
+ *   "email": "ali@gmail.com",
+ *   "password": "Ali@1234",
+ *   "role": "customer"
+ * }
+ *
+ * @request (Google/Apple Sign-up)
+ * {
+ *   "fullName": "Ali",
+ *   "email": "ali@gmail.com",
+ *   "idToken": "XYZ_ID_TOKEN",
+ *   "provider": "google", // or "apple"
+ *   "role": "customer"
+ * }
+ *
+ * @response (200 Success)
+ * {
+ *   "status": true,
+ *   "code": 200,
+ *   "message": "User registered successfully",
+ *   "data": {
+ *     "accessToken": "...",
+ *     "refreshToken": "...",
+ *     "expiresIn": "...",
+ *     "isPhoneNumberValidated": false,
+ *     "phoneNumbers": [],
+ *     "user": {
+ *       "_id": "...",
+ *       "fullName": "Ali",
+ *       "roleId": "...",
+ *       "email": "ali@gmail.com",
+ *       "phoneNumber": "03123456789",
+ *       "roleName": "customer",
+ *       ...
+ *     }
+ *   }
+ * }
+ */
+
+async function signup(request, response) {
+  try {
+    const params = request.body;
+    const isSocial = !!params.provider;
+
+    // Base required fields
+    const requiredFields = ["fullName", "email", "role"];
+    if (isSocial) {
+      requiredFields.push("idToken");
+    } else {
+      requiredFields.push("password", "phoneNumber");
+    }
+
+    const checkKeys = await checkKeysExist(params, requiredFields);
+    if (checkKeys) {
+      return sendResponse(response, moduleName, 422, 0, checkKeys);
+    }
+
+    // Check if user already exists
+    const existingUser = await UserModel.findOne({ email: params.email });
+    if (existingUser) {
+      return sendResponse(
+        response,
+        moduleName,
+        422,
+        0,
+        "User already exists with this email"
+      );
+    }
+
+    // Get role by title
+    const getRole = await Role.findOne({ title: params.role });
+    if (!getRole) {
+      return sendResponse(response, moduleName, 400, 0, "Invalid role");
+    }
+
+    // Create user model
+    const user = new UserModel({
+      fullName: params.fullName,
+      email: params.email,
+      phoneNumber: params.phoneNumber || null,
+      channel: request.header("channel") || "web",
+      roleId: params.roleId ? params.roleId : getRole._id,
+      isPasswordCreated: !!params.password,
+    });
+
+    // Social signup (Google or Apple)
+    if (isSocial) {
+      let verifiedPayload;
+
+      if (params.provider === "google") {
+        verifiedPayload = await verifyGoogleIdToken(params.idToken);
+      } else if (params.provider === "apple") {
+        verifiedPayload = await verifyAppleIdToken(params.idToken);
+      } else {
+        return sendResponse(response, moduleName, 400, 0, "Invalid provider");
+      }
+
+      // Verify email matches
+      if (verifiedPayload.email !== params.email) {
+        return sendResponse(response, moduleName, 401, 0, "Email mismatch");
+      }
+
+      user.authProvider = params.provider;
+    }
+    // Manual signup
+    else if (params.password) {
+      const hashPin = await bcrypt.hash(params.password, salt);
+      user.password = hashPin;
+      user.authProvider = "manual";
+    }
+    else {
+      return sendResponse(response, moduleName, 422, 0, "Password or Social Login required");
+    }
+
+    // Save user
+    const data = await user.save();
+
+    // System logs
+    await systemLogsHelper.composeSystemLogs({
+      userId: data._id,
+      userIp: request.ip,
+      roleId: data.roleId,
+      module: moduleName,
+      action: "signup",
+      data,
+    });
+
+    // Prepare and send response with tokens
+    const getResp = await setUserResponse(data);
+    return sendResponse(response, moduleName, 200, 1, "User registered successfully", getResp);
+
+  } catch (error) {
+    console.error("Signup Error =>", error);
+    return sendResponse(response, moduleName, 500, 0, "Signup failed");
+  }
+}
+
+/**   
+ * @route   POST /api/auth/login
+ * @desc    Login with email/password or social login (Google/Apple)
+ * @access  Public
+ *
+ * @request (Manual Login)
+ * {
+ *   "email": "ali@gmail.com",
+ *   "password": "Ali@1234"
+ * }
+ *
+ * @request (Google/Apple Login)
+ * {
+ *   "email": "ali@gmail.com",
+ *   "idToken": "XYZ_ID_TOKEN",
+ *   "provider": "google" // or "apple"
+ * }
+ */
+
+async function login(request, response) {
+  try {
+    const { email, password, idToken, provider } = request.body;
+    const isSocial = !!provider;
+
+    // Validate required fields
+    const requiredFields = ["email"];
+    if (isSocial) {
+      requiredFields.push("idToken");
+    } else {
+      requiredFields.push("password");
+    }
+
+    const missingKeys = await checkKeysExist(request.body, requiredFields);
+    if (missingKeys) {
+      return sendResponse(response, moduleName, 422, 0, missingKeys);
+    }
+
+    // Find user by email
+    const user = await UserModel.findOne({ email: sanitize(email) });
+    if (!user) {
+      return sendResponse(response, moduleName, 422, 0, "Invalid email");
+    }
+
+    // Check user status
+    if (user.status !== "active") {
+      return sendResponse(response, moduleName, 422, 0, `Your account is ${user.status}`);
+    }
+
+    // Check if user is locked
+    if (user.isLocked) {
+      const lockUntil = moment(user.lockedAt).add(10, "minutes").format("LT z");
+      return sendResponse(response, moduleName, 422, 0, `User is locked until ${lockUntil}`);
+    }
+
+    // Check role status
+    const role = await Role.findById(sanitize(user.roleId));
+    if (role && role.status === "archived") {
+      return sendResponse(response, moduleName, 422, 0, "Role is archived");
+    }
+
+    // --- 🔐 Social Login ---
+    if (isSocial) {
+      let verifiedPayload;
+      if (provider === "google") {
+        verifiedPayload = await verifyGoogleIdToken(idToken);
+      } else if (provider === "apple") {
+        verifiedPayload = await verifyAppleIdToken(idToken);
+      } else {
+        return sendResponse(response, moduleName, 400, 0, "Invalid provider");
+      }
+
+      // Match verified email
+      if (verifiedPayload.email !== email) {
+        return sendResponse(response, moduleName, 401, 0, "Email mismatch");
+      }
+
+      // Create system logs and response
+      const getResp = await setUserResponse(user);
+
+      await UserModel.findByIdAndUpdate(
+        user._id,
+        { loginAttempts: 0, loginAt: new Date(), $unset: { lockedAt: 1 } },
+        { useFindAndModify: false }
+      );
+
+      await systemLogsHelper.composeSystemLogs({
+        userId: user._id,
+        userIp: request.ip,
+        roleId: user.roleId,
+        module: moduleName,
+        action: "login",
+        data: getResp,
+      });
+
+      return sendResponse(response, moduleName, 200, 1, "Login successful", getResp);
+    }
+
+    // --- 🔐 Manual Login ---
+    if (password && bcrypt.compareSync(password, user.password)) {
+      const getResp = await setUserResponse(user);
+
+      await UserModel.findByIdAndUpdate(
+        user._id,
+        { loginAttempts: 0, loginAt: new Date(), $unset: { lockedAt: 1 } },
+        { useFindAndModify: false }
+      );
+
+      await systemLogsHelper.composeSystemLogs({
+        userId: user._id,
+        userIp: request.ip,
+        roleId: user.roleId,
+        module: moduleName,
+        action: "login",
+        data: getResp,
+      });
+
+      return sendResponse(response, moduleName, 200, 1, "Login successful", getResp);
+    } else {
+      await user.incrementLoginAttempts();
+      return sendResponse(response, moduleName, 422, 0, "Invalid password");
+    }
+  } catch (error) {
+    console.error("--- login API error ---", error);
+    return sendResponse(response, moduleName, 500, 0, "Something went wrong");
+  }
+}
+
+
+// async function signupWithOutSocialLogin(request, response) {
+
+//   try {
+//     let params = request.body;
+//   // check if the required keys are missing or not
+//   let checkKeys = await checkKeysExist(params, [
+//     "fullName",
+//     "phoneNumber",
+//     "email",
+//     "password",
+//     "role",  ]);
+//   if (checkKeys) {
+//     return sendResponse(response, moduleName, 422, 0, checkKeys);
+//   }
+//     // check if user is already exists
+//     let check = await UserModel.countDocuments({
+//       $or: [
+//         { email: params.email },
+//       ],
+//     });
+//     if (check && check > 0) {
+//       return sendResponse(
+//         response,
+//         moduleName,
+//         422,
+//         0,
+//         "User already exists with the given Email or Phone Number"
+//       );
+//     }
+
+//     let hashPin = await bcrypt.hashSync(params.password, salt);
+//     var user = new UserModel();
+//     user.fullName = params.fullName;
+//     user.email = params.email;
+//     user.phoneNumber = params.phoneNumber;
+//     user.password = hashPin;
+//     user.channel = request.header("channel")
+//       ? request.header("channel")
+//       : "web";
+//       let getRole = await Role.findOne({ title: params.role });
+//     user.roleId = params.roleId ? params.roleId : getRole._id;
+
+//     // create a new system user record
+//     console.log("User => ", user);
+//     let data = await user.save();
+//     console.log("data => ", data);
+//     // if created successfully
+
+//     if (data) {
+//       //create system logs
+//       let systemLogsData = {
+//         userId: data._id,
+//         userIp: request.ip,
+//         roleId: data.roleId,
+//         module: moduleName,
+//         action: "signup",
+//         data: data,
+//       };
+//       let systemLogs = await systemLogsHelper.composeSystemLogs(systemLogsData);
+//       let getResp = await setUserResponse(data);
+//       console.log("Get Response  => ", getResp);
+//       return sendResponse(
+//         response,
+//         moduleName,
+//         200,
+//         1,
+//         "User has been created successfully",
+//         getResp
+//       );
+//     }
+//   } catch (error) {
+//     console.log("--- Signup API Error ---", error);
+
+//     return sendResponse(
+//       response,
+//       moduleName,
+//       500,
+//       0,
+//       "Something went wrong, please try again later."
+//     );
+//   }
+// }
+
+// async function signupOld(request, response) {
+//   // lang = request.header("lang") ? request.header("lang") : lang;
+//   // moduleName = await getModuleNameFromLanguage(lang, "AuthController");
+//   // responseMsgs = await getResponseMsgsFromLanguage(lang, "AuthController");
+
+//   let params = request.body;
+
+//   // check if the required keys are missing or not
+//   let checkKeys = await checkKeysExist(params, [
+//     "fullName",
+//     "phoneNumber",
+//     "email",
+//     "password",
+//     "role",
+//     // "cnic",
+//   ]);
+//   if (checkKeys) {
+//     return sendResponse(response, moduleName, 422, 0, checkKeys);
+//   }
+//   try {
+//     // check if user is already exists
+//     let check = await UserModel.countDocuments({
+//       $or: [
+//         // { cnic: params.cnic },
+//         // { phoneNumber: params.phoneNumber },
+//         { email: params.email },
+//       ],
+//     });
+//     if (check && check > 0) {
+//       return sendResponse(
+//         response,
+//         moduleName,
+//         422,
+//         0,
+//         "User already exists with the given Email or Phone Number"
+//         // responseMsgs.CustomerExistsMsg
+//       );
+//     }
+
+//     let hashPin = await bcrypt.hashSync(params.password, salt);
+
+//     var user = new UserModel();
+//     user.fullName = params.fullName;
+//     user.email = params.email;
+//     user.phoneNumber = params.phoneNumber;
+//     user.password = hashPin;
+//     // user.cnic = params.cnic;
+//     // user.preferredLanguage = lang;
+//     user.channel = request.header("channel")
+//       ? request.header("channel")
+//       : "web";
+
+//     // check customer from the core system
+//     // let customerDetails = await checkCustomer(params);
+//     // console.log('------',customerDetails)
+//     // let getRole = "";
+//     // if (customerDetails) {
+//       // getRole = await Role.findOne({ title: "Member" });
+//     // } else {
+//     //   getRole = await Role.findOne({ title: "Guest" });
+//     // }
+//       let getRole = await Role.findOne({ title: params.role });
+
+//     user.roleId = params.roleId ? params.roleId : getRole._id;
+//     // user.isPhoneNumberValidated =
+//     //   params?.isPhoneNumberValidated ?? user.isPhoneNumberValidated;
+
+//     // create a new system user record
+//     console.log("User => ", user);
+//     let data = await user.save();
+//     console.log("data => ", data);
+//     // if created successfully
+
+//     if (data) {
+//       //create system logs
+//       let systemLogsData = {
+//         userId: data._id,
+//         userIp: request.ip,
+//         roleId: data.roleId,
+//         module: moduleName,
+//         action: "signup",
+//         data: data,
+//       };
+//       let systemLogs = await systemLogsHelper.composeSystemLogs(systemLogsData);
+//       let getResp = await setUserResponse(data);
+//       console.log("Get Response  => ", getResp);
+//       return sendResponse(
+//         response,
+//         moduleName,
+//         200,
+//         1,
+//         // responseMsgs.CustomerCreatedMsg,
+//         "User has been created successfully",
+//         getResp
+//       );
+//     }
+//   } catch (error) {
+//     console.log("--- Signup API Error ---", error);
+
+//     return sendResponse(
+//       response,
+//       moduleName,
+//       500,
+//       0,
+//       // responseMsgs.error_500
+//       "Something went wrong, please try again later."
+//     );
+//   }
+// }
 
 /** authenticate user and generate access token **/
 async function loginCheck(request, response) {
@@ -736,115 +1204,6 @@ async function login(request, response) {
   } catch (error) {
     console.error("--- login API error ---", error);
     return sendResponse(response, moduleName, 500, 0, responseMsgs.error_500);
-  }
-}
-
-/** register user and generate access token **/
-async function signup(request, response) {
-  lang = request.header("lang") ? request.header("lang") : lang;
-  moduleName = await getModuleNameFromLanguage(lang, "AuthController");
-  responseMsgs = await getResponseMsgsFromLanguage(lang, "AuthController");
-
-  let params = request.body;
-
-  // check if the required keys are missing or not
-  let checkKeys = await checkKeysExist(params, [
-    "fullName",
-    "phoneNumber",
-    // "cnic",
-    "email",
-    "password",
-  ]);
-  if (checkKeys) {
-    return sendResponse(response, moduleName, 422, 0, checkKeys);
-  }
-  try {
-    // check if user is already exists
-    let check = await UserModel.countDocuments({
-      $or: [
-        { cnic: params.cnic },
-        { phoneNumber: params.phoneNumber },
-        // { email: params.email },
-      ],
-    });
-    if (check && check > 0) {
-      return sendResponse(
-        response,
-        moduleName,
-        422,
-        0,
-        responseMsgs.CustomerExistsMsg
-        // "Customer already exists with the given CNIC or Phone Number"
-      );
-    }
-
-    let hashPin = await bcrypt.hashSync(params.pin, salt);
-
-    var user = new UserModel();
-    user.fullName = params.fullName;
-    user.email = params.email;
-    user.phoneNumber = params.phoneNumber;
-    user.cnic = params.cnic;
-    user.password = hashPin;
-    user.preferredLanguage = lang;
-    user.channel = request.header("channel")
-      ? request.header("channel")
-      : "web";
-
-    // check customer from the core system
-    let customerDetails = await checkCustomer(params);
-    // console.log('------',customerDetails)
-    let getRole = "";
-    if (customerDetails) {
-      getRole = await Role.findOne({ title: "Member" });
-    } else {
-      getRole = await Role.findOne({ title: "Guest" });
-    }
-
-    user.roleId = params.roleId ? params.roleId : getRole._id;
-    user.isPhoneNumberValidated =
-      params?.isPhoneNumberValidated ?? user.isPhoneNumberValidated;
-
-    // create a new system user record
-    console.log("User => ", user);
-    let data = await user.save();
-    console.log("data => ", data);
-    // if created successfully
-
-    if (data) {
-      //create system logs
-      let systemLogsData = {
-        userId: data._id,
-        userIp: request.ip,
-        roleId: data.roleId,
-        module: moduleName,
-        action: "signup",
-        data: data,
-      };
-      let systemLogs = await systemLogsHelper.composeSystemLogs(systemLogsData);
-      let getResp = await setUserResponse(data);
-      console.log("Get Response  => ", getResp);
-      return sendResponse(
-        response,
-        moduleName,
-        200,
-        1,
-        responseMsgs.CustomerCreatedMsg,
-        // "Customer has been created successfully",
-        getResp
-      );
-    }
-  } catch (error) {
-    console.log("--- Signup API Error ---", error);
-
-    return sendResponse(
-      response,
-      moduleName,
-      500,
-      0,
-      responseMsgs.error_500
-      // "Something went wrong, please try again later."
-    );
   }
 }
 

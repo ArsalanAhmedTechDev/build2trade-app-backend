@@ -27,6 +27,25 @@ const crmCoreAPIUrl = process.env.CRM_CORE_API_URL;
 const crmCoreAPIEmail = process.env.CRM_CORE_API_EMAIL;
 const crmCoreAPIPassword = process.env.CRM_CORE_API_PASSWORD;
 
+const { OAuth2Client } = require("google-auth-library");
+const appleSignin = require("apple-signin-auth");
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+async function verifyGoogleIdToken(idToken) {
+  const ticket = await googleClient.verifyIdToken({
+    idToken,
+    audience: process.env.GOOGLE_CLIENT_ID,
+  });
+  return ticket.getPayload();
+}
+
+async function verifyAppleIdToken(idToken) {
+  return await appleSignin.verifyIdToken(idToken, {
+    audience: process.env.APPLE_CLIENT_ID,
+    ignoreExpiration: false,
+  });
+}
+
 async function authenticateLoginCRM() {
   try {
     console.log(crmCoreAPIUrl, crmCoreAPIEmail, crmCoreAPIPassword);
@@ -297,20 +316,23 @@ async function setUserResponse(data, setToken = true) {
     accessToken: setToken ? token.accessToken : null,
     refreshToken: setToken ? token.refreshToken : null,
     expiresIn: setToken ? token.tokenExpirationDate : null,
-    isCustomerExistsIn5thPillar: data.isCustomerExistsIn5thPillar
-      ? data.isCustomerExistsIn5thPillar
-      : false,
+    // isCustomerExistsIn5thPillar: data.isCustomerExistsIn5thPillar
+    //   ? data.isCustomerExistsIn5thPillar
+    //   : false,
     isPhoneNumberValidated: data.isPhoneNumberValidated
       ? data.isPhoneNumberValidated
       : false,
-    phoneNumbers: data.phoneNumbers ? data.phoneNumbers : [],
+          isEmailValidated: data.isEmailValidated
+      ? data.isEmailValidated
+      : false,
+    // phoneNumbers: data.phoneNumbers ? data.phoneNumbers : [],
     user: {
       _id: data._id,
       fullName: data.fullName,
       roleId: data.roleId,
       email: data.email,
-      cnic: data.cnic,
-      bookACall: data.bookACall ? data.bookACall : false,
+      // cnic: data.cnic,
+      // bookACall: data.bookACall ? data.bookACall : false,
       phoneNumber: data.phoneNumber,
       roleName: role.title,
       image: data.image,
@@ -529,6 +551,8 @@ async function getResponseMsgsFromLanguage(language, controllerKey) {
 }
 
 module.exports = {
+  verifyGoogleIdToken,
+  verifyAppleIdToken,
   authenticateLoginCRM,
   getComplaintSetup,
   createComplaintRequestInCRM,

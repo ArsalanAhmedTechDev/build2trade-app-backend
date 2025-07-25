@@ -5,6 +5,11 @@ const ObjectId = mongoose.Types.ObjectId;
 
 const userSchema = new Schema(
   {
+    authProvider: {
+      type: String,
+      enum: ["manual", "google", "apple"],
+      default: "manual",
+    },
     fullName: {
       type: String,
       required: true,
@@ -17,24 +22,24 @@ const userSchema = new Schema(
     },
     isdCode: {
       type: String,
-      default: "92",
+      default: "0061",
       min: 1,
-      max: 3,
+      max: 4,
     },
     phoneNumber: {
       type: String,
       required: true,
       maxlength: 15,
     },
-    cnic: {
-      type: String,
-      required: true,
-      // match: [
-      //     /^\d{5}-\d{7}-\d{1}$/,
-      //     'Invalid format. Should be in the format xxxxx-xxxxxxx-x',
-      // ],
-      unique: true,
-    },
+    // cnic: {
+    //   type: String,
+    //   required: true,
+    //   // match: [
+    //   //     /^\d{5}-\d{7}-\d{1}$/,
+    //   //     'Invalid format. Should be in the format xxxxx-xxxxxxx-x',
+    //   // ],
+    //   unique: true,
+    // },
     email: {
       type: String,
       required: true,
@@ -43,7 +48,7 @@ const userSchema = new Schema(
         /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
         "Invalid email format",
       ],
-      // unique: true,
+      unique: true,
     },
     password: {
       type: String,
@@ -65,11 +70,15 @@ const userSchema = new Schema(
         default: null,
       },
     },
-    bookACall: {
+    // bookACall: {
+    //   type: Boolean,
+    //   default: false,
+    // },
+    isPhoneNumberValidated: {
       type: Boolean,
       default: false,
     },
-    isPhoneNumberValidated: {
+    isEmailValidated: {
       type: Boolean,
       default: false,
     },
@@ -109,7 +118,6 @@ const userSchema = new Schema(
     loginAt: { type: Date, default: Date.now },
 
     /** New Fields added **/
-
     createdBy: {
       type: ObjectId,
       default: null,
