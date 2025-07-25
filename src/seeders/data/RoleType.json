@@ -1,0 +1,17 @@
+[
+  {
+    "_id": "5d441507fee606eed0f233ef",
+    "title" : "Customers",
+    "status" : "active"
+  },
+  {
+    "_id": "5d441507fee606eed0f233e3",
+    "title" : "Agents",
+    "status" : "active"
+  },
+  {
+    "_id": "5d441507fee606eed0f233e5",
+    "title" : "System Users",
+    "status" : "active"
+  }
+]

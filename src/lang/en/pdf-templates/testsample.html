@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      html {
+        zoom: 1.02;
+      }
+      @font-face {
+        font-family: "Calisto MT";
+        src: url("https://customers-dev.5thpillartakaful.com/backend/api/fonts/calisto-mt.woff2")
+            format("woff2"),
+          url("https://customers-dev.5thpillartakaful.com/backend/api/fonts/calisto-mt.woff")
+            format("woff"),
+          url("https://customers-dev.5thpillartakaful.com/backend/api/fonts/calisto-mt.ttf")
+            format("truetype");
+      }
+
+      body {
+        font-family: "Calisto MT", "Times New Roman", Times, serif;
+        background-color: #fff;
+        margin: 0;
+        padding: 0;
+        /* font-size: 14px; */
+      }
+
+      .container {
+        max-width: 1470px;
+        margin: 0 auto;
+        padding: 32px 0 0;
+        background-color: #fff;
+      }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 0px;
+        font-size: 16px;
+      }
+
+      .date p {
+        margin: 0 0 40px;
+        font-size: 15px;
+      }
+
+      .logo {
+        width: 100px;
+      }
+
+      .logo img {
+        max-width: 100%;
+        height: auto;
+      }
+
+      .greeting {
+        margin: 0 0 20px;
+      }
+      .greeting p {
+        margin: 0;
+        line-height: normal;
+        font-size: 16px;
+      }
+
+      .info {
+        margin: 0 0 20px;
+      }
+
+      .info p {
+        margin: 0;
+        font-size: 16px;
+      }
+
+      .subject p {
+        margin: 0 0 13px;
+        font-size: 16px;
+      }
+
+      .subject p.new {
+        font-size: 16px;
+      }
+
+      .font-bold {
+        font-weight: bold;
+      }
+
+      .membership-status p {
+        margin: 2;
+      }
+
+      .row {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        margin-bottom: 14px;
+      }
+
+      .row div {
+        margin-bottom: 5px;
+      }
+
+      .gap-30 {
+        gap: 30px;
+      }
+      .gap-67 {
+        gap: 67px;
+      }
+      .gap-76 {
+        gap: 76px;
+      }
+      .gap-78 {
+        gap: 78px;
+      }
+      .gap-92 {
+        gap: 92px;
+      }
+      .gap-108 {
+        gap: 108px;
+      }
+      .gap-120 {
+        gap: 120px;
+      }
+      .gap-149 {
+        gap: 149px;
+      }
+      .gap-163 {
+        gap: 163px;
+      }
+      .gap-172 {
+        gap: 172px;
+      }
+
+      .footer p {
+        line-height: normal;
+        font-size: 13px;
+      }
+
+      .footer a {
+        color: #000;
+      }
+
+      .company-info {
+        margin-top: 24px;
+        text-align: center;
+        color: #6c6b79;
+        margin-bottom: 0;
+      }
+
+      .company-info hr {
+        margin: 20px 0 0;
+        border-top: 0.1px solid #547ec9;
+      }
+
+      .company-info p {
+        color: #000;
+        margin: 0;
+        line-height: normal;
+      }
+
+      .company-info a {
+        color: #000;
+        text-decoration: none;
+      }
+
+      .mt-20 {
+        margin-top: 20px !important;
+        font-size: 14px;
+      }
+      .mt-40 {
+        margin-top: 40px !important;
+      }
+
+      .font-bold {
+        font-weight: 700;
+      }
+
+      .company-info p.font-bold {
+        font-size: 16px;
+      }
+
+      .company-info p.text-zinc-500 {
+        font-size: 10px;
+      }
+
+      /* Adjustments for positioning issues in PDFs */
+      .left-negative {
+        position: relative;
+        left: -90px;
+      }
+
+      .right-negative {
+        position: relative;
+        right: 134px;
+      }
+      .grid-container {
+        display: grid;
+        font-size: 14px;
+        grid-template-columns: 190px 20px 330px;
+        /* grid-template-columns:  auto auto auto; */
+      }
+      .margin-full {
+        margin-left: 83px;
+        margin-right: 83px;
+      }
+
+      .header.margin-full {
+        margin-top: 92px;
+      }
+
+      .mid-margin {
+        margin: 35px 0;
+      }
+
+      .last-margin {
+        margin-bottom: 35px;
+      }
+
+      .customFontSize {
+        font-size: 15px !important;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="header margin-full">
+        <div class="date">
+          <p>` + moment().format("DD-MM-YYYY") + `</p>
+          <div class="greeting">
+            <p>FULLNAME1</p>
+            <p>STARTADDRESS</p>
+            <p>ENDADDRESS</p>
+            <p>CITY</p>
+          </div>
+        </div>
+        <div class="logo">
+          <img src="LOGOURL" alt="5th Pillar Logo" />
+        </div>
+      </div>
+
+      <div class="info margin-full mt-20">
+        <p>Mobile: MOBILE</p>
+        <p>Phone: PHONE</p>
+      </div>
+
+      <div class="subject margin-full mt-40">
+        <p class="new">Dear FULLNAME2,</p>
+        <p class="font-bold new">
+          Subject: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+          <u>Membership Status</u>
+        </p>
+        <p class="customFontSize">
+          Brief Status of your Membership is mentioned below:
+        </p>
+      </div>
+
+      <div class="membership-status margin-full mt-20">
+        <div class="grid-container">
+          <div>Membership No</div>
+          <div>:</div>
+          <div>POLICYNO</div>
+          <div>Takaful Plan</div>
+          <div>:</div>
+          <div>PLAN</div>
+          <div>Commencement Date</div>
+          <div>:</div>
+          <div>COMMNCEMENTDATE</div>
+          <div>Modal Contribution</div>
+          <div>:</div>
+          <div>PKR TOTALMODECONTRIBUTION</div>
+          <div>Mode of Payment</div>
+          <div>:</div>
+          <div>MODE</div>
+          <div>Next Contribution Due Date</div>
+          <div>:</div>
+          <div>NEXTDUEDATE</div>
+          <div>Total Contribution Paid</div>
+          <div>:</div>
+          <div>PKR TOTALREGULARPAIDCONTRIBUTION</div>
+          <div>Status of Membership</div>
+          <div>:</div>
+          <div>STATUS</div>
+          <div>Face Value</div>
+          <div>:</div>
+          <div>PKR FACEVALUE</div>
+          <div>PIF Value</div>
+          <div>:</div>
+          <div>PKR CASHVALUE</div>
+        </div>
+        <p class="mt-20">PIF Value calculated as of CASHVALUEDATE</p>
+      </div>
+
+      <div class="footer margin-full">
+        <p>
+          The PIF value mentioned above is approximate and payments exclusive of
+          PIF value are subject to deduction<br />
+          of charges, if any, in accordance with membership terms and
+          conditions.<br />
+          This is a Family Takaful product which has two distinct elements i.e.,
+          Family Takaful Protection and<br />Investment. The Investment
+          Component is linked to the performance of underlying assets under unit
+          linked <br />fund(s).
+        </p>
+        <p>
+          For further queries, please feel free to call our Participant Services
+          Department at (021) 111-786-573 <br />during business hours or write
+          to us at
+          <a href="mailto:PSD@5thpillartakaful.com" class="text-blue-500"
+            >PSD@5thpillartakaful.com</a
+          >. We thank you for your continuous<br />patronage and assure you of
+          our best personalized services.
+        </p>
+        <p class="mid-margin customFontSize">Sincerely,</p>
+        <p class="last-margin customFontSize">
+          Team Lead<br />Participant Services Department
+        </p>
+        <p class="customFontSize">
+          Note: This is a system-generated document and does not require any
+          signature.
+        </p>
+      </div>
+
+      <div class="company-info">
+        <hr />
+        <p class="font-bold">5th Pillar Family Takaful Limited</p>
+        <p class="text-zinc-500">
+          Suit # 01-06 Second Floor Emerald Tower Clifton-5 Karachi. Email:
+          <a href="mailto:info@5thpillartakaful.com"
+            >info@5thpillartakaful.com</a
+          >
+        </p>
+        <p class="text-zinc-500">
+          Website:
+          <a href="https://www.5thpillartakaful.com">www.5thpillartakaful.com</a
+          >, UAN: 111-786-573
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

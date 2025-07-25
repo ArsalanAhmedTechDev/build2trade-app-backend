@@ -1,0 +1,42 @@
+[
+    {
+        "_id": "5d441507fee606eed0f233ee",
+        "title": "Admin",
+        "associatedUsers": 1,
+        "permissions": [
+            "view-customers",
+            "manage-customers",
+            "view-agents",
+            "manage-agents",
+            "view-system-users",
+            "manage-system-users",
+            "view-roles",
+            "manage-roles",
+            "system-logs"
+        ],
+        "status": "active",
+        "roleTypeId": "5d441507fee606eed0f233e5"
+    },
+    {
+        "_id": "5d441507fee606eed0f233fe",
+        "title": "Member",
+        "associatedUsers": 0,
+        "permissions": [
+            "view-dashboard",
+            "system-logs"
+        ],
+        "status": "active",
+        "roleTypeId": "5d441507fee606eed0f233ef"
+    },
+    {
+        "_id": "5d441507fee606eed0f233e0",
+        "title": "Guest",
+        "associatedUsers": 0,
+        "permissions": [
+            "view-dashboard",
+            "system-logs"
+        ],
+        "status": "active",
+        "roleTypeId": "5d441507fee606eed0f233ef"
+    }
+]

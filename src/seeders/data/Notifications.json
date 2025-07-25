@@ -1,0 +1,17 @@
+[
+  {
+    "title": { "english" : "Nothing to see here", "urdu": "ایگریسیو"},
+    "message": {"english" :  "When something interesting happens we...", "urdu": "زیادہ"},
+    "status": "active"
+  },
+  {
+    "title": {"english": "Nothing to see here","urdu": "بیلنسڈ"},
+    "message": {"english": "When something interesting happens we...","urdu": "معتدل"},
+    "status": "active"
+  },
+  {
+    "title": {"english": "Nothing to see here","urdu": "منی مارکیٹ"},
+    "message": {"english": "When something interesting happens we...", "urdu": "کم"},
+    "status": "active"
+  }
+]

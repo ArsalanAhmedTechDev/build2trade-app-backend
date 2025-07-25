@@ -1,0 +1,12 @@
+[
+    {
+        "_id": "5d4425a69b3fbb467f612f59",
+        "phoneNumber": "03482173757",
+        "cnic": "1234567890123",
+        "fullName": "Farhan Nadeem",
+        "email": "farhan.nadeem@idenfo.com",
+        "password": "P@ssword1",
+        "roleId": "5d441507fee606eed0f233fe",
+        "status": "active"
+    }
+]

@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #fff;
+        margin: 0;
+        padding: 0;
+      }
+
+      .container {
+        max-width: 1470px;
+        margin: 0 auto;
+        padding: 32px 0;
+        background-color: #fff;
+      }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+      }
+
+      .date p {
+        font-size: 0.875rem;
+        margin: 0;
+      }
+
+      .logo {
+        width: 130px;
+      }
+
+      .logo img {
+        max-width: 100%;
+        height: auto;
+      }
+
+      .greeting p {
+        margin-top: 0;
+        margin-bottom: 10px;
+        line-height: 24px;
+      }
+
+      .info p {
+        margin-top: 20px;
+        margin-bottom: 0;
+      }
+
+      .subject p {
+        margin-top: 24px;
+        margin-bottom: 13px;
+      }
+
+      .font-bold {
+        font-weight: bold;
+      }
+
+      .membership-status p {
+        margin: 0;
+      }
+
+      .row {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        margin-bottom: 14px;
+      }
+
+      .row div {
+        margin-bottom: 5px;
+      }
+
+      .gap-30 {
+        gap: 30px;
+      }
+      .gap-67 {
+        gap: 67px;
+      }
+      .gap-76 {
+        gap: 76px;
+      }
+      .gap-78 {
+        gap: 78px;
+      }
+      .gap-92 {
+        gap: 92px;
+      }
+      .gap-108 {
+        gap: 108px;
+      }
+      .gap-120 {
+        gap: 120px;
+      }
+      .gap-149 {
+        gap: 149px;
+      }
+      .gap-163 {
+        gap: 163px;
+      }
+      .gap-172 {
+        gap: 172px;
+      }
+
+      .footer p {
+        line-height: 1.5;
+      }
+
+      .footer a {
+        color: #3b82f6;
+        text-decoration: none;
+      }
+
+      .company-info {
+        margin-top: 24px;
+        text-align: center;
+        color: #6c6b79;
+      }
+
+      .company-info hr {
+        margin: 20px 0 0;
+        border-color: #e5e5e536;
+        border-top-width: 1px;
+      }
+
+      .company-info p {
+        color: #6c6b79;
+        margin: 0;
+        line-height: 24px;
+      }
+
+      .company-info a {
+        color: #6c6b79;
+        text-decoration: none;
+      }
+
+      .mt-20 {
+        margin-top: 20px;
+      }
+
+      .font-bold {
+        font-weight: 700;
+      }
+
+      /* Adjustments for positioning issues in PDFs */
+      .left-negative {
+        position: relative;
+        left: -90px;
+      }
+
+      .right-negative {
+        position: relative;
+        right: 134px;
+      }
+      .grid-container {
+        display: grid;
+        width: 30;
+        grid-template-columns: auto auto auto;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="header">
+        <div class="date">
+          <p><b>Date:</b> ` + moment().format("DD/MM/YYYY") + `</p>
+        </div>
+        <div class="logo">
+          <img src="LOGOURL" alt="5th Pillar Logo" />
+        </div>
+      </div>
+
+      <div class="greeting">
+        <p>
+          Mr. / Ms. FULLNAME,<br />
+          FULLADDRESS<br />CITY
+        </p>
+      </div>
+
+      <div class="info">
+        <p><b>Mobile:</b> MOBILE</p>
+        <p><b>Phone:</b> PHONE</p>
+      </div>
+
+      <div class="subject">
+        <p>Dear Mr. / Ms. FULLNAME2,</p>
+        <p class="font-bold">
+          Subject: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+          <u>Membership Status</u>
+        </p>
+        <p>Brief Status of your Membership is mentioned below:</p>
+      </div>
+
+      <div class="membership-status">
+        <div class="grid-container">
+          <div><strong>Membership No</strong></div>
+          <div>:</div>
+          <div>POLICYNO</div>
+          <div><strong>Takaful Plan</strong></div>
+          <div>:</div>
+          <div>PLAN</div>
+          <div><strong>Commencement Date</strong></div>
+          <div>:</div>
+          <div>COMMNCEMENTDATE</div>
+          <div><strong>Modal Contribution</strong></div>
+          <div>:</div>
+          <div>PKR TOTALMODECONTRIBUTION Contribution</div>
+          <div><strong>Mode of Payment</strong></div>
+          <div>:</div>
+          <div>MODE</div>
+          <div>Next Contribution Due Date</div>
+          <div>:</div>
+          <div>NEXTDUEDATE</div>
+          <div><strong>Total Contribution Paid</strong></div>
+          <div>:</div>
+          <div>PKR TOTALREGULARPAIDCONTRIBUTION Contribution</div>
+          <div><strong>Status of Membership</strong></div>
+          <div>:</div>
+          <div>STATUS</div>
+          <div><strong>Face Value</strong></div>
+          <div>:</div>
+          <div>FACEVALUE</div>
+          <div><strong>PIF Value</strong></div>
+          <div>:</div>
+          <div>PKR CASHVALUE Contribution</div>
+        </div>
+        <p class="mt-20">PIF Value calculated as of CASHVALUEDATE</p>
+      </div>
+
+      <div class="footer">
+        <p>
+          The PIF value mentioned above is approximate, payments exclusive of
+          the PIF value are subject to deduction of charges, if any, in
+          accordance with membership terms and conditions.<br />
+          This is a Family Takaful product with two distinct elements: Family
+          Takaful Protection and Investment. The Investment Component is linked
+          to the performance of underlying assets under unit linked fund(s).
+        </p>
+        <p>
+          For further queries, please call our Participant Services Department
+          at (021) 111-786-573 during business hours or write to us at
+          <a href="mailto:PSD@5thpillartakaful.com" class="text-blue-500"
+            >PSD@5thpillartakaful.com</a
+          >. We thank you for your continuous patronage and assure you of our
+          best personalized services.
+        </p>
+        <p>Sincerely,</p>
+        <p>Team Lead<br />Participant Services Department</p>
+        <p>
+          Note: This is a system-generated document and does not require any
+          signature.
+        </p>
+      </div>
+
+      <div class="company-info">
+        <hr />
+        <p class="font-bold">5th Pillar Family Takaful Limited</p>
+        <p class="text-zinc-500">
+          Suit # 01-06 Second Floor Emerald Tower Clifton-5 Karachi.
+        </p>
+        <p class="text-zinc-500">
+          Email:
+          <a href="mailto:info@5thpillartakaful.com"
+            >info@5thpillartakaful.com</a
+          >
+        </p>
+        <p class="text-zinc-500">
+          Website:
+          <a href="https://www.5thpillartakaful.com"
+            >www.5thpillartakaful.com</a
+          >
+        </p>
+      </div>
+    </div>
+  </body>
+</html>
