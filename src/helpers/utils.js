@@ -36,7 +36,9 @@ async function verifyGoogleIdToken(idToken) {
     idToken,
     audience: process.env.GOOGLE_CLIENT_ID,
   });
-  return ticket.getPayload();
+  const  googleResponse = ticket.getPayload();
+  console.log("googleResponse", googleResponse);
+  return googleResponse
 }
 
 async function verifyAppleIdToken(idToken) {

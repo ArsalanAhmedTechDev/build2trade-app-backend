@@ -28,7 +28,7 @@ const userSchema = new Schema(
     },
     phoneNumber: {
       type: String,
-      required: true,
+      required: false,
       maxlength: 15,
     },
     // cnic: {

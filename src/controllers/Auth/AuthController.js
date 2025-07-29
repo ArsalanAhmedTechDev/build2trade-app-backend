@@ -916,296 +916,296 @@ async function customerExist(request, response) {
 }
 
 /** authenticate user and generate access token **/
-async function login(request, response) {
-  try {
-    lang = request.header("lang") ? request.header("lang") : lang;
-    moduleName = await getModuleNameFromLanguage(lang, "AuthController");
-    responseMsgs = await getResponseMsgsFromLanguage(lang, "AuthController");
-    const { cnic, pin } = request.body;
-    var isCustomerExistsIn5thPillar = false;
-    var isPhoneNumberValidated = false;
-    var phoneNumbers = [];
+// async function login(request, response) {
+//   try {
+//     lang = request.header("lang") ? request.header("lang") : lang;
+//     moduleName = await getModuleNameFromLanguage(lang, "AuthController");
+//     responseMsgs = await getResponseMsgsFromLanguage(lang, "AuthController");
+//     const { cnic, pin } = request.body;
+//     var isCustomerExistsIn5thPillar = false;
+//     var isPhoneNumberValidated = false;
+//     var phoneNumbers = [];
 
-    // Check if required keys are missing
-    const missingKeys = await checkKeysExist({ cnic, pin }, ["cnic", "pin"]);
-    if (missingKeys) {
-      return sendResponse(response, moduleName, 422, 0, missingKeys);
-    }
+//     // Check if required keys are missing
+//     const missingKeys = await checkKeysExist({ cnic, pin }, ["cnic", "pin"]);
+//     if (missingKeys) {
+//       return sendResponse(response, moduleName, 422, 0, missingKeys);
+//     }
 
-    /** Find user by CNIC **/
-    const user = await UserModel.findOne({ cnic: sanitize(cnic) });
-    if (!user) {
-      return sendResponse(
-        response,
-        moduleName,
-        422,
-        0,
-        responseMsgs.InvalidCnicMsg
-      );
-    }
+//     /** Find user by CNIC **/
+//     const user = await UserModel.findOne({ cnic: sanitize(cnic) });
+//     if (!user) {
+//       return sendResponse(
+//         response,
+//         moduleName,
+//         422,
+//         0,
+//         responseMsgs.InvalidCnicMsg
+//       );
+//     }
 
-    // Check user status
-    if (user.status !== "active") {
-      return sendResponse(
-        response,
-        moduleName,
-        422,
-        0,
-        `${responseMsgs.accountStatusMsg} ${user.status}`
-      );
-    }
+//     // Check user status
+//     if (user.status !== "active") {
+//       return sendResponse(
+//         response,
+//         moduleName,
+//         422,
+//         0,
+//         `${responseMsgs.accountStatusMsg} ${user.status}`
+//       );
+//     }
 
-    // Check if user is locked
-    if (user.isLocked) {
-      const lockUntil = moment(user.lockedAt).add(10, "minutes").format("LT z");
-      return sendResponse(
-        response,
-        moduleName,
-        422,
-        0,
-        `${responseMsgs.userLockedMsg} ${lockUntil}`
-      );
-    }
+//     // Check if user is locked
+//     if (user.isLocked) {
+//       const lockUntil = moment(user.lockedAt).add(10, "minutes").format("LT z");
+//       return sendResponse(
+//         response,
+//         moduleName,
+//         422,
+//         0,
+//         `${responseMsgs.userLockedMsg} ${lockUntil}`
+//       );
+//     }
 
-    /** Check role status **/
-    const role = await Role.findById(sanitize(user.roleId));
-    if (role && role.status === "archived") {
-      return sendResponse(
-        response,
-        moduleName,
-        422,
-        0,
-        responseMsgs.userRoleMsg
-      );
-    }
+//     /** Check role status **/
+//     const role = await Role.findById(sanitize(user.roleId));
+//     if (role && role.status === "archived") {
+//       return sendResponse(
+//         response,
+//         moduleName,
+//         422,
+//         0,
+//         responseMsgs.userRoleMsg
+//       );
+//     }
 
-    if (user?.isPhoneNumberValidated === true) {
-      isCustomerExistsIn5thPillar = true;
-      isPhoneNumberValidated = true;
-      phoneNumbers = [];
-    }
+//     if (user?.isPhoneNumberValidated === true) {
+//       isCustomerExistsIn5thPillar = true;
+//       isPhoneNumberValidated = true;
+//       phoneNumbers = [];
+//     }
 
-    // Check customer in core system and update role if necessary
-    if (role?.title === "Guest" || user?.isPhoneNumberValidated === true) {
-      let customer5thPillarDetails = await checkCustomerPhoneNumber(cnic);
-      // let customer5thPillarDetails = {
-      //   Policies: [
-      //     {
-      //       OwnerInfo: {
-      //         Mobile: "+923333222222",
-      //       },
-      //     },
-      //   ],
-      // };
-      if (customer5thPillarDetails) {
-        const memberRole = await Role.findOne({ title: "Member" });
-        const updatedUser = await UserModel.findOneAndUpdate(
-          { cnic },
-          { roleId: memberRole._id, updatedAt: new Date() },
-          { new: true }
-        );
-        if (updatedUser) {
-          await systemLogsHelper.composeSystemLogs({
-            userId: updatedUser._id,
-            userIp: request.ip,
-            roleId: updatedUser.roleId,
-            module: moduleName,
-            action: "login",
-            data: updatedUser,
-          });
-        }
+//     // Check customer in core system and update role if necessary
+//     if (role?.title === "Guest" || user?.isPhoneNumberValidated === true) {
+//       let customer5thPillarDetails = await checkCustomerPhoneNumber(cnic);
+//       // let customer5thPillarDetails = {
+//       //   Policies: [
+//       //     {
+//       //       OwnerInfo: {
+//       //         Mobile: "+923333222222",
+//       //       },
+//       //     },
+//       //   ],
+//       // };
+//       if (customer5thPillarDetails) {
+//         const memberRole = await Role.findOne({ title: "Member" });
+//         const updatedUser = await UserModel.findOneAndUpdate(
+//           { cnic },
+//           { roleId: memberRole._id, updatedAt: new Date() },
+//           { new: true }
+//         );
+//         if (updatedUser) {
+//           await systemLogsHelper.composeSystemLogs({
+//             userId: updatedUser._id,
+//             userIp: request.ip,
+//             roleId: updatedUser.roleId,
+//             module: moduleName,
+//             action: "login",
+//             data: updatedUser,
+//           });
+//         }
 
-        // var phoneNumbers = new Set(
-        //   customer5thPillarDetails.Policies.map(
-        //     (element) => element?.OwnerInfo?.Mobile
-        //   ).filter(Boolean)
-        // );
+//         // var phoneNumbers = new Set(
+//         //   customer5thPillarDetails.Policies.map(
+//         //     (element) => element?.OwnerInfo?.Mobile
+//         //   ).filter(Boolean)
+//         // );
 
-        // // Convert each phone number into the required format +92-XXX-XXXXXXX and add title, value structure
-        // var distinctPhoneNumbers = [...phoneNumbers].map((phone) => {
-        //   // Format the number to +92-XXX-XXXXXXX
-        //   const formattedPhone =
-        //     "+92-" + phone.slice(1, 4) + "-" + phone.slice(4);
+//         // // Convert each phone number into the required format +92-XXX-XXXXXXX and add title, value structure
+//         // var distinctPhoneNumbers = [...phoneNumbers].map((phone) => {
+//         //   // Format the number to +92-XXX-XXXXXXX
+//         //   const formattedPhone =
+//         //     "+92-" + phone.slice(1, 4) + "-" + phone.slice(4);
 
-        //   // Create title by masking the middle 4 digits
-        //   const maskedPhone =
-        //     "+92-" + phone.slice(1, 4) + "-XXXX" + phone.slice(-3);
+//         //   // Create title by masking the middle 4 digits
+//         //   const maskedPhone =
+//         //     "+92-" + phone.slice(1, 4) + "-XXXX" + phone.slice(-3);
 
-        //   // Return object with title and value
-        //   return {
-        //     title: maskedPhone,
-        //     value: formattedPhone,
-        //   };
-        // });
+//         //   // Return object with title and value
+//         //   return {
+//         //     title: maskedPhone,
+//         //     value: formattedPhone,
+//         //   };
+//         // });
 
-        var phoneNumbers = new Set(
-          customer5thPillarDetails.Policies.map((element) => {
-            let phone = element?.OwnerInfo?.Mobile;
+//         var phoneNumbers = new Set(
+//           customer5thPillarDetails.Policies.map((element) => {
+//             let phone = element?.OwnerInfo?.Mobile;
 
-            // Check if the phone number exceeds 11 characters
-            if (phone && phone.length > 13) {
-              return sendResponse(
-                response,
-                moduleName,
-                422, // or appropriate error code
-                0,
-                responseMsgs.InvalidPhoneNumberLength,
-                {
-                  isCustomerExistsIn5thPillar: true,
-                  isPhoneNumberValidated: false,
-                }
-              );
-            }
+//             // Check if the phone number exceeds 11 characters
+//             if (phone && phone.length > 13) {
+//               return sendResponse(
+//                 response,
+//                 moduleName,
+//                 422, // or appropriate error code
+//                 0,
+//                 responseMsgs.InvalidPhoneNumberLength,
+//                 {
+//                   isCustomerExistsIn5thPillar: true,
+//                   isPhoneNumberValidated: false,
+//                 }
+//               );
+//             }
 
-            // If phone exists, take only the last 10 digits
-            if (phone) {
-              phone = phone.slice(-10); // Get last 10 digits
-            }
+//             // If phone exists, take only the last 10 digits
+//             if (phone) {
+//               phone = phone.slice(-10); // Get last 10 digits
+//             }
 
-            return phone;
-          }).filter((phone) => phone && phone.length === 10) // Ensure phone number is exactly 10 digits
-        );
+//             return phone;
+//           }).filter((phone) => phone && phone.length === 10) // Ensure phone number is exactly 10 digits
+//         );
 
-        // Format each distinct phone number into +92-XXX-XXXXXXX and add title, value structure
-        const distinctPhoneNumbers = [...phoneNumbers].map((phone) => {
-          const formattedPhone =
-            "+92-" + phone.slice(0, 3) + "-" + phone.slice(3);
-          const maskedPhone =
-            "+92-" + phone.slice(0, 3) + "-XXXX" + phone.slice(-3);
+//         // Format each distinct phone number into +92-XXX-XXXXXXX and add title, value structure
+//         const distinctPhoneNumbers = [...phoneNumbers].map((phone) => {
+//           const formattedPhone =
+//             "+92-" + phone.slice(0, 3) + "-" + phone.slice(3);
+//           const maskedPhone =
+//             "+92-" + phone.slice(0, 3) + "-XXXX" + phone.slice(-3);
 
-          return {
-            title: maskedPhone,
-            value: formattedPhone,
-          };
-        });
+//           return {
+//             title: maskedPhone,
+//             value: formattedPhone,
+//           };
+//         });
 
-        console.log("distinctPhoneNumbers", distinctPhoneNumbers);
+//         console.log("distinctPhoneNumbers", distinctPhoneNumbers);
 
-        if (distinctPhoneNumbers.length) {
-          var payloadPhoneNumber = user.phoneNumber;
+//         if (distinctPhoneNumbers.length) {
+//           var payloadPhoneNumber = user.phoneNumber;
 
-          // Directly compare only with the 'value' field as both are in the same format
-          var matchedPhoneNumber = distinctPhoneNumbers.find(
-            (phone) => phone.value === payloadPhoneNumber
-          );
+//           // Directly compare only with the 'value' field as both are in the same format
+//           var matchedPhoneNumber = distinctPhoneNumbers.find(
+//             (phone) => phone.value === payloadPhoneNumber
+//           );
 
-          if (matchedPhoneNumber) {
-            console.log(`Match found: ${matchedPhoneNumber}`);
+//           if (matchedPhoneNumber) {
+//             console.log(`Match found: ${matchedPhoneNumber}`);
 
-            isCustomerExistsIn5thPillar = true;
-            isPhoneNumberValidated = true;
-            phoneNumbers = [];
+//             isCustomerExistsIn5thPillar = true;
+//             isPhoneNumberValidated = true;
+//             phoneNumbers = [];
 
-            // write a update boolean query here for user.isPhoneNumberValidated;
-            const updatedUser = await UserModel.findOneAndUpdate(
-              { cnic },
-              { isPhoneNumberValidated: true, updatedAt: new Date() },
-              { new: true }
-            );
-            if (updatedUser) {
-              await systemLogsHelper.composeSystemLogs({
-                userId: updatedUser._id,
-                userIp: request.ip,
-                roleId: updatedUser.roleId,
-                module: moduleName,
-                action: "login",
-                data: updatedUser,
-              });
-            }
+//             // write a update boolean query here for user.isPhoneNumberValidated;
+//             const updatedUser = await UserModel.findOneAndUpdate(
+//               { cnic },
+//               { isPhoneNumberValidated: true, updatedAt: new Date() },
+//               { new: true }
+//             );
+//             if (updatedUser) {
+//               await systemLogsHelper.composeSystemLogs({
+//                 userId: updatedUser._id,
+//                 userIp: request.ip,
+//                 roleId: updatedUser.roleId,
+//                 module: moduleName,
+//                 action: "login",
+//                 data: updatedUser,
+//               });
+//             }
 
-            // return sendResponse(
-            //   response,
-            //   moduleName,
-            //   200,
-            //   1,
-            //   responseMsg.CustomerExistsIn5thillar,
-            //   {
-            //     customerExists: customerExists,
-            //     isCustomerExistsIn5thPillar: true,
-            //     isPhoneNumberValidated: true,
-            //   }
-            // );
-          } else {
-            console.log(
-              "User Phone Number Not Matched with 5th Pillar Policies"
-            );
-            isCustomerExistsIn5thPillar = true;
-            isPhoneNumberValidated = false;
-            phoneNumbers = distinctPhoneNumbers;
-            // return sendResponse(
-            //   response,
-            //   moduleName,
-            //   200,
-            //   1,
-            //   responseMsg.CustomerNotValidatedFrom5thillar,
-            //   {
-            //     customerExists: customerExists,
-            //     isCustomerExistsIn5thPillar: true,
-            //     isPhoneNumberValidated: false,
-            //     phoneNumbers: distinctPhoneNumbers,
-            //   }
-            // );
-          }
-        }
-      }
-    }
-    /** Validate user PIN **/
-    if (bcrypt.compareSync(pin, user.password)) {
-      // Add the fields to the user object
-      user.isCustomerExistsIn5thPillar = isCustomerExistsIn5thPillar;
-      user.isPhoneNumberValidated = isPhoneNumberValidated;
-      user.phoneNumbers = phoneNumbers;
+//             // return sendResponse(
+//             //   response,
+//             //   moduleName,
+//             //   200,
+//             //   1,
+//             //   responseMsg.CustomerExistsIn5thillar,
+//             //   {
+//             //     customerExists: customerExists,
+//             //     isCustomerExistsIn5thPillar: true,
+//             //     isPhoneNumberValidated: true,
+//             //   }
+//             // );
+//           } else {
+//             console.log(
+//               "User Phone Number Not Matched with 5th Pillar Policies"
+//             );
+//             isCustomerExistsIn5thPillar = true;
+//             isPhoneNumberValidated = false;
+//             phoneNumbers = distinctPhoneNumbers;
+//             // return sendResponse(
+//             //   response,
+//             //   moduleName,
+//             //   200,
+//             //   1,
+//             //   responseMsg.CustomerNotValidatedFrom5thillar,
+//             //   {
+//             //     customerExists: customerExists,
+//             //     isCustomerExistsIn5thPillar: true,
+//             //     isPhoneNumberValidated: false,
+//             //     phoneNumbers: distinctPhoneNumbers,
+//             //   }
+//             // );
+//           }
+//         }
+//       }
+//     }
+//     /** Validate user PIN **/
+//     if (bcrypt.compareSync(pin, user.password)) {
+//       // Add the fields to the user object
+//       user.isCustomerExistsIn5thPillar = isCustomerExistsIn5thPillar;
+//       user.isPhoneNumberValidated = isPhoneNumberValidated;
+//       user.phoneNumbers = phoneNumbers;
 
-      await UserModel.updateOne(
-        { _id: user._id },
-        { $set: { preferredLanguage: lang } }
-      );
-      user.preferredLanguage = lang;
+//       await UserModel.updateOne(
+//         { _id: user._id },
+//         { $set: { preferredLanguage: lang } }
+//       );
+//       user.preferredLanguage = lang;
 
-      // Call setUserResponse with the updated user object
-      const getResp = await setUserResponse(user);
+//       // Call setUserResponse with the updated user object
+//       const getResp = await setUserResponse(user);
 
-      console.log("Login Response => ", getResp);
+//       console.log("Login Response => ", getResp);
 
-      await UserModel.findByIdAndUpdate(
-        user._id,
-        { loginAttempts: 0, loginAt: new Date(), $unset: { lockedAt: 1 } },
-        { useFindAndModify: false }
-      );
+//       await UserModel.findByIdAndUpdate(
+//         user._id,
+//         { loginAttempts: 0, loginAt: new Date(), $unset: { lockedAt: 1 } },
+//         { useFindAndModify: false }
+//       );
 
-      // Create system logs
-      await systemLogsHelper.composeSystemLogs({
-        userId: user._id,
-        userIp: request.ip,
-        roleId: user.roleId,
-        module: moduleName,
-        action: "login",
-        data: getResp,
-      });
+//       // Create system logs
+//       await systemLogsHelper.composeSystemLogs({
+//         userId: user._id,
+//         userIp: request.ip,
+//         roleId: user.roleId,
+//         module: moduleName,
+//         action: "login",
+//         data: getResp,
+//       });
 
-      return sendResponse(
-        response,
-        moduleName,
-        200,
-        1,
-        responseMsgs.loginMsg,
-        getResp
-      );
-    } else {
-      await user.incrementLoginAttempts();
-      return sendResponse(
-        response,
-        moduleName,
-        422,
-        0,
-        responseMsgs.InvalidPinMsg
-      );
-    }
-  } catch (error) {
-    console.error("--- login API error ---", error);
-    return sendResponse(response, moduleName, 500, 0, responseMsgs.error_500);
-  }
-}
+//       return sendResponse(
+//         response,
+//         moduleName,
+//         200,
+//         1,
+//         responseMsgs.loginMsg,
+//         getResp
+//       );
+//     } else {
+//       await user.incrementLoginAttempts();
+//       return sendResponse(
+//         response,
+//         moduleName,
+//         422,
+//         0,
+//         responseMsgs.InvalidPinMsg
+//       );
+//     }
+//   } catch (error) {
+//     console.error("--- login API error ---", error);
+//     return sendResponse(response, moduleName, 500, 0, responseMsgs.error_500);
+//   }
+// }
 
 /** update pin and generate access token **/
 async function updatePin(request, response) {
