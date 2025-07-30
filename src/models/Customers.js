@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const moment = require("moment");
+const { Certificate } = require("crypto");
 const { Schema, model } = mongoose;
 const ObjectId = mongoose.Types.ObjectId;
 
@@ -53,6 +54,11 @@ const userSchema = new Schema(
     password: {
       type: String,
     },
+    jobRoleId: {
+      type: ObjectId,
+      required: false,
+      ref: "jobRole",
+    },
     roleId: {
       type: ObjectId,
       required: true,
@@ -70,10 +76,10 @@ const userSchema = new Schema(
         default: null,
       },
     },
-    // bookACall: {
-    //   type: Boolean,
-    //   default: false,
-    // },
+    address: {
+      type: String,
+      required: false,
+    },
     isPhoneNumberValidated: {
       type: Boolean,
       default: false,
@@ -82,11 +88,39 @@ const userSchema = new Schema(
       type: Boolean,
       default: false,
     },
+    companyName: {
+      type: String,
+      required: false,
+    },
+    intro: {
+      type: String,
+      default: null,
+      maxlength: 2000,
+    },
+    skills: {
+      type: [String], // 👈 Array of strings
+      default: [], // 👈 Default empty array
+      validate: [arrayLimit, "{PATH} exceeds the limit of 10 items"],
+    },
+    certifications: {
+      type: [String], // 👈 Array of strings
+      default: [], // 👈 Default empty array
+      validate: [arrayLimit, "{PATH} exceeds the limit of 10 items"],
+    },
+    tools: {
+      type: [String], // 👈 Array of strings
+      default: [], // 👈 Default empty array
+      validate: [arrayLimit, "{PATH} exceeds the limit of 10 items"],
+    },
+    experienceLevel: {
+      type: String,
+      enum: ["", "beginner", "intermediate", "expert"],
+      default: "",
+    },
     notifications: {
       type: Boolean,
       default: true,
     },
-
     status: {
       type: String,
       required: true,
@@ -109,6 +143,44 @@ const userSchema = new Schema(
       type: String,
       enum: ["web", "android", "ios"],
       default: "web",
+    },
+    websiteLink: {
+      type: String,
+      default: null,
+      maxlength: 1000,
+    },
+    facebookLink: {
+      type: String,
+      default: null,
+      maxlength: 1000,
+    },
+    instagramLink: {
+      type: String,
+      default: null,
+      maxlength: 1000,
+    },
+    linkedinLink: {
+      type: String,
+      default: null,
+      maxlength: 1000,
+    },
+    xLink: {
+      type: String,
+      default: null,
+      maxlength: 1000,
+    },
+    tiktokLink: {
+      type: String,
+      default: null,
+      maxlength: 1000,
+    },
+    registrationNumber: {
+      type: String,
+      required: false,
+    },
+    abn: {
+      type: String,
+      required: false,
     },
     loginAttempts: { type: Number, default: 0 },
     // isLocked: { type:Boolean, default:false},

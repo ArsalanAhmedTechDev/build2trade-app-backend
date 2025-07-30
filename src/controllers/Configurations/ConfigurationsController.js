@@ -22,6 +22,7 @@ const {
   authenticate,
   getPolicyDetails,
 } = require("../../helpers/utils");
+const JobRoles = require("../../models/JobRoles");
 
 // module name
 let moduleName;
@@ -167,148 +168,215 @@ async function getComplaintTypesDropdown(lang) {
   }
 }
 
+// /** Get All Configurations **/
+// async function getAllConfigurations(request, response) {
+//   try {
+//     console.log("ALL LISTING API...............");
+
+//     lang = request.header("lang") ? request.header("lang") : lang;
+//     moduleName = await getModuleNameFromLanguage(
+//       lang,
+//       "ConfigurationsController"
+//     );
+//     responseMsgs = await getResponseMsgsFromLanguage(
+//       lang,
+//       "ConfigurationsController"
+//     );
+
+//     // return sendResponse(
+//     //   response,
+//     //   moduleName,
+//     //   200,
+//     //   1,
+//     //   responseMsgs.recordFetched,
+//     //   {
+//     //     dailyfundprices: {
+//     //       latestTransactionDate: "2024-12-31T00:00:00.000Z",
+//     //     },
+//     //     notifications: {
+//     //       unreadCount: 0,
+//     //     },
+//     //     singleNotification: {
+//     //       isShow: true,
+//     //       fileName: "customerNotifications/file-1745872113119.png",
+//     //     },
+//     //     serviceRequestsDropdown: [
+//     //       {
+//     //         label: "Change Fund",
+//     //         value: "674d91cb2d8c8d4bfda09bfe",
+//     //       },
+//     //       {
+//     //         label: "ddsadas",
+//     //         value: "674f14d3a7ffb27592fbefc6",
+//     //       },
+//     //     ],
+//     //     policiesDropdown: [
+//     //       {
+//     //         label: "UL2023/000001168-1",
+//     //         value: "UL2023/000001168-1",
+//     //       },
+//     //       {
+//     //         label: "5PUL2023000002375-1",
+//     //         value: "5PUL2023000002375-1",
+//     //       },
+//     //       {
+//     //         label: "5PUL2024000004800-1",
+//     //         value: "5PUL2024000004800-1",
+//     //       },
+//     //     ],
+//     //     complaintTypesDropdown: [
+//     //       {
+//     //         label: "Test case 1",
+//     //         value: "682737d729157a340191a293",
+//     //       },
+//     //     ],
+//     //   }
+//     // );
+
+//     const userId = request.user._id;
+//     const userCnic = request.user.cnic;
+
+//     const data = {
+//       dailyfundprices: {},
+//       notifications: {
+//         unreadCount: 0,
+//       },
+//       singleNotification: {
+//         isShow: false,
+//         fileName: "",
+//       },
+//       settings: {},
+//       serviceRequestsDropdown: [],
+//       policiesDropdown: [],
+//       complaintTypesDropdown: [],
+//     };
+
+//     // Get the start of today//
+//     const startOfToday = new Date();
+//     startOfToday.setHours(0, 0, 0, 0);
+
+//     // Query to count unread notifications for the "New" section
+//     const unreadCount = await NotificationStatusModel.countDocuments({
+//       userId: new ObjectId(userId),
+//       readStatus: false,
+//       createdAt: { $gte: startOfToday }, // Created today
+//     });
+//     data.notifications.unreadCount = unreadCount || 0;
+
+//     // Retrieve the latest transaction date from FundPricesModel
+//     const fundPricesTransactionDate = await FundPricesModel.findOne({})
+//       .sort({ transactionDate: -1 })
+//       .select("transactionDate");
+//     data.dailyfundprices.latestTransactionDate =
+//       fundPricesTransactionDate?.transactionDate || null;
+
+//     let serviceRequests = await getServiceRequestDropdown(lang);
+//     if (serviceRequests) {
+//       data.serviceRequestsDropdown = serviceRequests || "";
+//     }
+
+//     let complaintTypes = await getComplaintTypesDropdown(lang);
+//     if (complaintTypes) {
+//       data.complaintTypesDropdown = complaintTypes || "";
+//     }
+
+//     let policies = await getPolicyDropdown(request.user.cnic);
+//     if (policies) {
+//       data.policiesDropdown = policies || "";
+//     }
+
+//     // Find the first document where the Agent Code matches
+//     const singleNotificationUser = await SingleNotificationModel.findOne({
+//       "customer.cnics": userCnic,
+//     });
+
+//     if (
+//       singleNotificationUser &&
+//       singleNotificationUser.customer &&
+//       singleNotificationUser.customer.fileName
+//     ) {
+//       data.singleNotification.isShow = true;
+//       data.singleNotification.fileName =
+//         singleNotificationUser.customer.fileName;
+//     }
+
+//     // Find customer settings (only isCashValueShow)
+//     const customerOnly = await SettingModel.findOne(
+//       {},
+//       { "customer.isCashValueShow": 1, _id: 0 }
+//     );
+
+//     // Set directly inside data.setting
+//     data.setting = {
+//       isCashValueShow: customerOnly?.customer?.isCashValueShow ?? null,
+//     };
+
+//     if (data) {
+//       return sendResponse(
+//         response,
+//         moduleName,
+//         200,
+//         1,
+//         responseMsgs.recordFetched,
+//         data
+//       );
+//     }
+
+//     return sendResponse(
+//       response,
+//       moduleName,
+//       500,
+//       0,
+//       responseMsgs.recordNotFound
+//     );
+//   } catch (error) {
+//     console.log("--- Get All Configurations API Error ---", error);
+//     return sendResponse(
+//       response,
+//       moduleName,
+//       500,
+//       0,
+//       responseMsgs.error_500
+//       // "Something went wrong, please try again later."
+//     );
+//   }
+// }
+
 /** Get All Configurations **/
 async function getAllConfigurations(request, response) {
   try {
     console.log("ALL LISTING API...............");
 
-    lang = request.header("lang") ? request.header("lang") : lang;
-    moduleName = await getModuleNameFromLanguage(
-      lang,
-      "ConfigurationsController"
-    );
-    responseMsgs = await getResponseMsgsFromLanguage(
-      lang,
-      "ConfigurationsController"
-    );
-
-    // return sendResponse(
-    //   response,
-    //   moduleName,
-    //   200,
-    //   1,
-    //   responseMsgs.recordFetched,
-    //   {
-    //     dailyfundprices: {
-    //       latestTransactionDate: "2024-12-31T00:00:00.000Z",
-    //     },
-    //     notifications: {
-    //       unreadCount: 0,
-    //     },
-    //     singleNotification: {
-    //       isShow: true,
-    //       fileName: "customerNotifications/file-1745872113119.png",
-    //     },
-    //     serviceRequestsDropdown: [
-    //       {
-    //         label: "Change Fund",
-    //         value: "674d91cb2d8c8d4bfda09bfe",
-    //       },
-    //       {
-    //         label: "ddsadas",
-    //         value: "674f14d3a7ffb27592fbefc6",
-    //       },
-    //     ],
-    //     policiesDropdown: [
-    //       {
-    //         label: "UL2023/000001168-1",
-    //         value: "UL2023/000001168-1",
-    //       },
-    //       {
-    //         label: "5PUL2023000002375-1",
-    //         value: "5PUL2023000002375-1",
-    //       },
-    //       {
-    //         label: "5PUL2024000004800-1",
-    //         value: "5PUL2024000004800-1",
-    //       },
-    //     ],
-    //     complaintTypesDropdown: [
-    //       {
-    //         label: "Test case 1",
-    //         value: "682737d729157a340191a293",
-    //       },
-    //     ],
-    //   }
-    // );
-
-    const userId = request.user._id;
-    const userCnic = request.user.cnic;
-
+    // lang = request.header("lang") ? request.header("lang") : lang;
+    // const userId = request.user._id;
     const data = {
-      dailyfundprices: {},
       notifications: {
         unreadCount: 0,
       },
-      singleNotification: {
-        isShow: false,
-        fileName: "",
-      },
-      settings: {},
-      serviceRequestsDropdown: [],
-      policiesDropdown: [],
-      complaintTypesDropdown: [],
+      jobRolesDropdown: [],
     };
 
-    // Get the start of today//
-    const startOfToday = new Date();
-    startOfToday.setHours(0, 0, 0, 0);
+    // // Get the start of today//
+    // const startOfToday = new Date();
+    // startOfToday.setHours(0, 0, 0, 0);
 
-    // Query to count unread notifications for the "New" section
-    const unreadCount = await NotificationStatusModel.countDocuments({
-      userId: new ObjectId(userId),
-      readStatus: false,
-      createdAt: { $gte: startOfToday }, // Created today
+    // // Query to count unread notifications for the "New" section
+    // const unreadCount = await NotificationStatusModel.countDocuments({
+    //   userId: new ObjectId(userId),
+    //   readStatus: false,
+    //   createdAt: { $gte: startOfToday }, // Created today
+    // });
+    // data.notifications.unreadCount = unreadCount || 0;
+
+    let JobRolesData = await JobRolesModel.find({
+      status: "active",
     });
-    data.notifications.unreadCount = unreadCount || 0;
-
-    // Retrieve the latest transaction date from FundPricesModel
-    const fundPricesTransactionDate = await FundPricesModel.findOne({})
-      .sort({ transactionDate: -1 })
-      .select("transactionDate");
-    data.dailyfundprices.latestTransactionDate =
-      fundPricesTransactionDate?.transactionDate || null;
-
-    let serviceRequests = await getServiceRequestDropdown(lang);
-    if (serviceRequests) {
-      data.serviceRequestsDropdown = serviceRequests || "";
+    if (JobRolesData) {
+      data.jobRolesDropdown = JobRolesData.map((item) => ({
+        label: item.title, // Dynamically access the title property using the lang variable
+        value: item._id,
+      }));
     }
-
-    let complaintTypes = await getComplaintTypesDropdown(lang);
-    if (complaintTypes) {
-      data.complaintTypesDropdown = complaintTypes || "";
-    }
-
-    let policies = await getPolicyDropdown(request.user.cnic);
-    if (policies) {
-      data.policiesDropdown = policies || "";
-    }
-
-    // Find the first document where the Agent Code matches
-    const singleNotificationUser = await SingleNotificationModel.findOne({
-      "customer.cnics": userCnic,
-    });
-
-    if (
-      singleNotificationUser &&
-      singleNotificationUser.customer &&
-      singleNotificationUser.customer.fileName
-    ) {
-      data.singleNotification.isShow = true;
-      data.singleNotification.fileName =
-        singleNotificationUser.customer.fileName;
-    }
-
-    // Find customer settings (only isCashValueShow)
-    const customerOnly = await SettingModel.findOne(
-      {},
-      { "customer.isCashValueShow": 1, _id: 0 }
-    );
-
-    // Set directly inside data.setting
-    data.setting = {
-      isCashValueShow: customerOnly?.customer?.isCashValueShow ?? null,
-    };
 
     if (data) {
       return sendResponse(
@@ -326,7 +394,8 @@ async function getAllConfigurations(request, response) {
       moduleName,
       500,
       0,
-      responseMsgs.recordNotFound
+      "Configurations not found"
+      // responseMsgs.recordNotFound
     );
   } catch (error) {
     console.log("--- Get All Configurations API Error ---", error);
@@ -335,8 +404,8 @@ async function getAllConfigurations(request, response) {
       moduleName,
       500,
       0,
-      responseMsgs.error_500
-      // "Something went wrong, please try again later."
+      "Something went wrong, please try again later."
+      // responseMsgs.error_500
     );
   }
 }

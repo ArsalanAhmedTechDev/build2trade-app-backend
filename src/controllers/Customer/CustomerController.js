@@ -39,6 +39,7 @@ const coreAPIUrl = process.env.CORE_API_URL;
 
 // const sendEmail = require("../../helpers/send-email-test");
 module.exports = {
+  createProfile,
   updateProfile,
   updatePhoneNumber,
   updateAccountStatus,
@@ -52,6 +53,90 @@ module.exports = {
   filterPolicies,
   // createMembershipDownloadFileLogs,
 };
+
+
+/**
+ * @route   POST /api/auth/create-profile
+ * @desc    Create or update user profile
+ * @access  Private (Assumes user is authenticated)
+ *
+ * @request
+ * {
+ *   companyName: "Tech Inc",
+ *   phoneNumber: "03001234567", // optional
+ *   jobRoleId: "64eae8c1234f..." // optional
+ *   address: "Lahore, Pakistan",
+ *   intro: "We are a tech company...",
+ *   skills: ["JavaScript", "React"], // optional
+ *   certifications: ["AWS", "Scrum Master"], // optional
+ *   tools: ["Figma", "Jira"], // optional
+ *   experienceLevel: "expert", // optional
+ *   websiteLink: "https://example.com", // optional
+ *   facebookLink: "...", instagramLink: "...", linkedinLink: "...",
+ *   xLink: "...", tiktokLink: "...", // all optional
+ *   abn: "12345678901", // optional
+ *   registrationNumber: "REG-2024-4567" // optional
+ * }
+ */
+
+async function createProfile(request, response) {
+  try {
+    const userId = request.user?._id;
+    const body = request.body;
+
+    // Required fields
+    const requiredFields = ["companyName", "address", "intro"];
+    const missingKeys = await checkKeysExist(body, requiredFields);
+    if (missingKeys) {
+      return sendResponse(response, "createProfile", 422, 0, missingKeys);
+    }
+
+    const updatedProfile = {};
+
+    // Required fields (always present)
+    updatedProfile.companyName = sanitize(body.companyName);
+    updatedProfile.address = sanitize(body.address);
+    updatedProfile.intro = sanitize(body.intro);
+
+    // Optional fields
+    if (body.phoneNumber) updatedProfile.phoneNumber = sanitize(body.phoneNumber);
+    if (body.jobRoleId) updatedProfile.jobRoleId = sanitize(body.jobRoleId);
+    if (Array.isArray(body.skills)) updatedProfile.skills = body.skills.map(sanitize);
+    if (Array.isArray(body.certifications)) updatedProfile.certifications = body.certifications.map(sanitize);
+    if (Array.isArray(body.tools)) updatedProfile.tools = body.tools.map(sanitize);
+
+    const validLevels = ["beginner", "intermediate", "expert"];
+    if (validLevels.includes(body.experienceLevel)) {
+      updatedProfile.experienceLevel = sanitize(body.experienceLevel);
+    }
+
+    if (body.websiteLink) updatedProfile.websiteLink = sanitize(body.websiteLink);
+    if (body.facebookLink) updatedProfile.facebookLink = sanitize(body.facebookLink);
+    if (body.instagramLink) updatedProfile.instagramLink = sanitize(body.instagramLink);
+    if (body.linkedinLink) updatedProfile.linkedinLink = sanitize(body.linkedinLink);
+    if (body.xLink) updatedProfile.xLink = sanitize(body.xLink);
+    if (body.tiktokLink) updatedProfile.tiktokLink = sanitize(body.tiktokLink);
+    if (body.abn) updatedProfile.abn = sanitize(body.abn);
+    if (body.registrationNumber) updatedProfile.registrationNumber = sanitize(body.registrationNumber);
+
+    // Save/update the user profile
+    const result = await UserModel.findByIdAndUpdate(
+      userId,
+      { $set: updatedProfile },
+      { new: true }
+    );
+
+    if (!result) {
+      return sendResponse(response, "createProfile", 404, 0, "User not found");
+    }
+
+    return sendResponse(response, "createProfile", 200, 1, "Profile updated successfully", result);
+
+  } catch (error) {
+    console.error("--- createProfile error ---", error);
+    return sendResponse(response, "createProfile", 500, 0, "Something went wrong");
+  }
+}
 
 /** get record **/
 async function getById(request, response) {

@@ -16,7 +16,7 @@ const { validateInput } = require("../../helpers/validate");
 router.post("/login", authController.login);
 router.post("/signup", authController.signup);
 // router.post("/set-password", authController.updatePin);
-// router.post("/logout", authController.logout);
+router.post("/logout", authController.logout);
 // router.post("/customer-exist", authController.customerExist);
 
 // router.get("/checkAuth", Authenticate, authController.checkAuth);

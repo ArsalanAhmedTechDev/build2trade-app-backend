@@ -1273,20 +1273,20 @@ async function updatePin(request, response) {
 async function logout(request, response) {
   try {
     lang = request.header("lang") ? request.header("lang") : lang;
-    moduleName = await getModuleNameFromLanguage(lang, "AuthController");
-    responseMsgs = await getResponseMsgsFromLanguage(lang, "AuthController");
+    // moduleName = await getModuleNameFromLanguage(lang, "AuthController");
+    // responseMsgs = await getResponseMsgsFromLanguage(lang, "AuthController");
 
     // get userId from request
-    let params = request.body;
+    let userId = request?.user?._id;
 
-    // check if the required keys are missing or not
-    let checkKeys = await checkKeysExist(params, ["userId"]);
-    if (checkKeys) {
-      return sendResponse(response, moduleName, 422, 0, checkKeys);
-    }
+    // // check if the required keys are missing or not
+    // let checkKeys = await checkKeysExist(userId, ["userId"]);
+    // if (checkKeys) {
+    //   return sendResponse(response, moduleName, 422, 0, checkKeys);
+    // }
     // revoke access token
     let token = await AccessToken.updateMany(
-      { userId: params.userId },
+      { userId: userId },
       { revoked: true, revokedAt: moment(), updatedAt: moment() },
       { upsert: true, useFindAndModify: false }
     );
@@ -1314,8 +1314,8 @@ async function logout(request, response) {
       moduleName,
       200,
       1,
-      responseMsgs.CustomerLogdOutMsg
-      // "Customer has been logout successfully"
+      // responseMsgs.CustomerLogdOutMsg
+      "Customer has been logout successfully"
     );
   } catch (error) {
     console.log("--- LOGOUT API ERROR ---", error);
@@ -1324,8 +1324,8 @@ async function logout(request, response) {
       moduleName,
       500,
       0,
-      responseMsgs.error_500
-      // "Something went wrong, please try again later."
+      // responseMsgs.error_500
+      "Something went wrong, please try again later."
     );
   }
 }
