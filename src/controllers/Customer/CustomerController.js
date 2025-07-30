@@ -120,7 +120,7 @@ async function createProfile(request, response) {
     if (body.registrationNumber) updatedProfile.registrationNumber = sanitize(body.registrationNumber);
 
     // Save/update the user profile
-    const result = await UserModel.findByIdAndUpdate(
+    const result = await CustomerModel.findByIdAndUpdate(
       userId,
       { $set: updatedProfile },
       { new: true }

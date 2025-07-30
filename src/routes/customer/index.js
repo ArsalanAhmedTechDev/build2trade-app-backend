@@ -12,7 +12,7 @@ const Authenticate = require("../../middlewares/authenticate");
 const { validateInput } = require("../../helpers/validate");
 
 /** Routes **/
-router.post("/creatProfile", Authenticate, CustomerController.createProfile);
+router.post("/createProfile", Authenticate, CustomerController.createProfile);
 router.post("/updateProfile", Authenticate, CustomerController.updateProfile);
 router.post(
   "/updatePhoneNumber",

@@ -552,9 +552,15 @@ async function getResponseMsgsFromLanguage(language, controllerKey) {
   return responseMsgs;
 }
 
+function arrayLimit(val) {
+  return val.length <= 5;
+}
+
+
 module.exports = {
   verifyGoogleIdToken,
   verifyAppleIdToken,
+  arrayLimit,
   authenticateLoginCRM,
   getComplaintSetup,
   createComplaintRequestInCRM,

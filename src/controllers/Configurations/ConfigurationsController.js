@@ -11,6 +11,7 @@ const NotificationStatusModel = require("../../models/NotificationStatus");
 const SingleNotificationModel = require("../../models/SingleNotification");
 const ComplaintTypesModel = require("../../models/ComplaintTypes");
 const SettingModel = require("../../models/Settings");
+const JobRolesModel = require("../../models/JobRoles");
 const {
   filterPolicies,
 } = require("../../controllers/Customer/CustomerController");
@@ -384,7 +385,8 @@ async function getAllConfigurations(request, response) {
         moduleName,
         200,
         1,
-        responseMsgs.recordFetched,
+        // responseMsgs.recordFetched,
+        "Configurations fetched successfully",
         data
       );
     }
