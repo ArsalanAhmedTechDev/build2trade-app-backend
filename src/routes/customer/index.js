@@ -13,6 +13,7 @@ const { validateInput } = require("../../helpers/validate");
 
 /** Routes **/
 router.post("/createProfile", Authenticate, CustomerController.createProfile);
+router.get("/getProfile", Authenticate, CustomerController.getProfile);
 router.post("/updateProfile", Authenticate, CustomerController.updateProfile);
 router.post(
   "/updatePhoneNumber",

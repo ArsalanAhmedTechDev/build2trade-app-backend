@@ -40,6 +40,7 @@ const coreAPIUrl = process.env.CORE_API_URL;
 // const sendEmail = require("../../helpers/send-email-test");
 module.exports = {
   createProfile,
+  getProfile,
   updateProfile,
   updatePhoneNumber,
   updateAccountStatus,
@@ -53,7 +54,6 @@ module.exports = {
   filterPolicies,
   // createMembershipDownloadFileLogs,
 };
-
 
 /**
  * @route   POST /api/auth/create-profile
@@ -91,35 +91,80 @@ async function createProfile(request, response) {
       return sendResponse(response, "createProfile", 422, 0, missingKeys);
     }
 
-    const updatedProfile = {};
+    const updatedProfile = {
+      companyName: sanitize(body.companyName),
+      address: sanitize(body.address),
+      intro: sanitize(body.intro),
+    };
 
-    // Required fields (always present)
-    updatedProfile.companyName = sanitize(body.companyName);
-    updatedProfile.address = sanitize(body.address);
-    updatedProfile.intro = sanitize(body.intro);
+    // Optional single-value fields
+    const optionalFields = [
+      "phoneNumber",
+      "jobRoleId",
+      "websiteLink",
+      "facebookLink",
+      "instagramLink",
+      "linkedinLink",
+      "tiktokLink",
+      "abn",
+      "registrationNumber",
+    ];
+    optionalFields.forEach((field) => {
+      if (body[field]) updatedProfile[field] = sanitize(body[field]);
+    });
 
-    // Optional fields
-    if (body.phoneNumber) updatedProfile.phoneNumber = sanitize(body.phoneNumber);
-    if (body.jobRoleId) updatedProfile.jobRoleId = sanitize(body.jobRoleId);
-    if (Array.isArray(body.skills)) updatedProfile.skills = body.skills.map(sanitize);
-    if (Array.isArray(body.certifications)) updatedProfile.certifications = body.certifications.map(sanitize);
-    if (Array.isArray(body.tools)) updatedProfile.tools = body.tools.map(sanitize);
+    // Optional array fields
+    const arrayFields = ["skills", "certifications", "certificationFiles", "tools"];
+    arrayFields.forEach((field) => {
+      if (Array.isArray(body[field])) {
+        updatedProfile[field] = body[field].map(sanitize);
+      }
+    });
 
+    // Optional avatar (nested)
+    if (body.avatar?.fileName) {
+      updatedProfile.avatar = sanitize(body.avatar.fileName);
+    }
+
+    // Handle experienceLevel
     const validLevels = ["beginner", "intermediate", "expert"];
     if (validLevels.includes(body.experienceLevel)) {
       updatedProfile.experienceLevel = sanitize(body.experienceLevel);
     }
 
-    if (body.websiteLink) updatedProfile.websiteLink = sanitize(body.websiteLink);
-    if (body.facebookLink) updatedProfile.facebookLink = sanitize(body.facebookLink);
-    if (body.instagramLink) updatedProfile.instagramLink = sanitize(body.instagramLink);
-    if (body.linkedinLink) updatedProfile.linkedinLink = sanitize(body.linkedinLink);
-    if (body.xLink) updatedProfile.xLink = sanitize(body.xLink);
-    if (body.tiktokLink) updatedProfile.tiktokLink = sanitize(body.tiktokLink);
-    if (body.abn) updatedProfile.abn = sanitize(body.abn);
-    if (body.registrationNumber) updatedProfile.registrationNumber = sanitize(body.registrationNumber);
+    // Profile Percentage Calculation
+    let profilePercentage = 0;
+    const percentageMap = [
+      { field: "address", points: 10 },
+      { field: "phoneNumber", points: 10 },
+      { field: "jobRoleId", points: 30 },
+      { field: "skills", type: "array", points: 10 },
+      { field: "certifications", type: "array", points: 10 },
+      { field: "tools", type: "array", points: 10 },
+      { field: "experienceLevel", type: "enum", valid: validLevels, points: 10 },
+      { field: "abn", points: 5 },
+      { field: "websiteLink", points: 1 },
+      { field: "facebookLink", points: 1 },
+      { field: "instagramLink", points: 1 },
+      { field: "linkedinLink", points: 1 },
+      { field: "tiktokLink", points: 1 },
+    ];
 
-    // Save/update the user profile
+    for (const item of percentageMap) {
+      const value = body[item.field];
+
+      if (item.type === "array" && Array.isArray(value) && value.length > 0) {
+        profilePercentage += item.points;
+      } else if (item.type === "enum" && item.valid.includes(value)) {
+        profilePercentage += item.points;
+      } else if (!item.type && value) {
+        profilePercentage += item.points;
+      }
+    }
+
+    updatedProfile.profilePercentage = profilePercentage;
+
+    // Save to DB
     const result = await CustomerModel.findByIdAndUpdate(
       userId,
       { $set: updatedProfile },
@@ -127,14 +172,50 @@ async function createProfile(request, response) {
     );
 
     if (!result) {
-      return sendResponse(response, "createProfile", 404, 0, "User not found");
+      return sendResponse(response, "createProfile", 422, 0, "User not found");
     }
 
-    return sendResponse(response, "createProfile", 200, 1, "Profile updated successfully", result);
-
+    return sendResponse(
+      response,
+      "createProfile",
+      200,
+      1,
+      "Profile updated successfully",
+      result
+    );
   } catch (error) {
     console.error("--- createProfile error ---", error);
     return sendResponse(response, "createProfile", 500, 0, "Something went wrong");
+  }
+}
+
+
+
+async function getProfile(request, response) {
+  try {
+    const userId = request.user?._id;
+
+    // if (!userId) {
+    //   return sendResponse(response, "getProfile", 401, 0, "Unauthorized");
+    // }
+
+    const user = await CustomerModel.findById(userId).lean();
+
+    if (!user) {
+      return sendResponse(response, "getProfile", 422, 0, "User not found");
+    }
+
+    return sendResponse(
+      response,
+      "getProfile",
+      200,
+      1,
+      "User Profile fetched successfully",
+      user
+    );
+  } catch (error) {
+    console.error("--- getProfile error ---", error);
+    return sendResponse(response, "getProfile", 500, 0, "Something went wrong");
   }
 }
 

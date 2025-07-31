@@ -108,6 +108,10 @@ const userSchema = new Schema(
       default: [], // 👈 Default empty array
       validate: [arrayLimit, "{PATH} exceeds the limit of 10 items"],
     },
+    certificationFiles: {
+      type: [String],
+      default: [],
+    },
     tools: {
       type: [String], // 👈 Array of strings
       default: [], // 👈 Default empty array
@@ -165,11 +169,6 @@ const userSchema = new Schema(
       default: null,
       maxlength: 1000,
     },
-    xLink: {
-      type: String,
-      default: null,
-      maxlength: 1000,
-    },
     tiktokLink: {
       type: String,
       default: null,
@@ -182,6 +181,10 @@ const userSchema = new Schema(
     abn: {
       type: String,
       required: false,
+    },
+    profilePercentage: {
+      type: Number,
+      default: 0,
     },
     loginAttempts: { type: Number, default: 0 },
     // isLocked: { type:Boolean, default:false},
