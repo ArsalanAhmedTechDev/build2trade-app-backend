@@ -79,10 +79,121 @@ module.exports = {
  * }
  */
 
+// async function createProfile(request, response) {
+//   try {
+//     const userId = request.user?._id;
+//     const body = request.body;
+
+//     // Required fields
+//     const requiredFields = ["companyName", "address", "intro"];
+//     const missingKeys = await checkKeysExist(body, requiredFields);
+//     if (missingKeys) {
+//       return sendResponse(response, "createProfile", 422, 0, missingKeys);
+//     }
+
+//     const updatedProfile = {
+//       companyName: sanitize(body.companyName),
+//       address: sanitize(body.address),
+//       intro: sanitize(body.intro),
+//     };
+
+//     // Optional single-value fields
+//     const optionalFields = [
+//       "phoneNumber",
+//       "jobRoleId",
+//       "websiteLink",
+//       "facebookLink",
+//       "instagramLink",
+//       "linkedinLink",
+//       "tiktokLink",
+//       "abn",
+//       "registrationNumber",
+//     ];
+//     optionalFields.forEach((field) => {
+//       if (body[field]) updatedProfile[field] = sanitize(body[field]);
+//     });
+
+//     // Optional array fields
+//     const arrayFields = ["skills", "certifications", "certificationFiles", "tools"];
+//     arrayFields.forEach((field) => {
+//       if (Array.isArray(body[field])) {
+//         updatedProfile[field] = body[field].map(sanitize);
+//       }
+//     });
+
+//     // Optional avatar (nested)
+//     if (body.avatar?.fileName) {
+//       updatedProfile.avatar = sanitize(body.avatar.fileName);
+//     }
+
+//     // Handle experienceLevel
+//     const validLevels = ["beginner", "intermediate", "expert"];
+//     if (validLevels.includes(body.experienceLevel)) {
+//       updatedProfile.experienceLevel = sanitize(body.experienceLevel);
+//     }
+
+//     // Profile Percentage Calculation
+//     let profilePercentage = 0;
+//     const percentageMap = [
+//       { field: "address", points: 10 },
+//       { field: "phoneNumber", points: 10 },
+//       { field: "jobRoleId", points: 30 },
+//       { field: "skills", type: "array", points: 10 },
+//       { field: "certifications", type: "array", points: 10 },
+//       { field: "tools", type: "array", points: 10 },
+//       { field: "experienceLevel", type: "enum", valid: validLevels, points: 10 },
+//       { field: "abn", points: 5 },
+//       { field: "websiteLink", points: 1 },
+//       { field: "facebookLink", points: 1 },
+//       { field: "instagramLink", points: 1 },
+//       { field: "linkedinLink", points: 1 },
+//       { field: "tiktokLink", points: 1 },
+//     ];
+
+//     for (const item of percentageMap) {
+//       const value = body[item.field];
+
+//       if (item.type === "array" && Array.isArray(value) && value.length > 0) {
+//         profilePercentage += item.points;
+//       } else if (item.type === "enum" && item.valid.includes(value)) {
+//         profilePercentage += item.points;
+//       } else if (!item.type && value) {
+//         profilePercentage += item.points;
+//       }
+//     }
+
+//     updatedProfile.profilePercentage = profilePercentage;
+
+//     // Save to DB
+//     const result = await CustomerModel.findByIdAndUpdate(
+//       userId,
+//       { $set: updatedProfile },
+//       { new: true }
+//     );
+
+//     if (!result) {
+//       return sendResponse(response, "createProfile", 422, 0, "User not found");
+//     }
+
+//     return sendResponse(
+//       response,
+//       "createProfile",
+//       200,
+//       1,
+//       "Profile updated successfully",
+//       result
+//     );
+//   } catch (error) {
+//     console.error("--- createProfile error ---", error);
+//     return sendResponse(response, "createProfile", 500, 0, "Something went wrong");
+//   }
+// }
+
 async function createProfile(request, response) {
   try {
     const userId = request.user?._id;
     const body = request.body;
+    const roleName = body.roleName;
 
     // Required fields
     const requiredFields = ["companyName", "address", "intro"];
@@ -91,13 +202,18 @@ async function createProfile(request, response) {
       return sendResponse(response, "createProfile", 422, 0, missingKeys);
     }
 
+    const oldProfile = await CustomerModel.findById(userId).lean();
+    if (!oldProfile) {
+      return sendResponse(response, "createProfile", 404, 0, "User not found");
+    }
+
     const updatedProfile = {
       companyName: sanitize(body.companyName),
       address: sanitize(body.address),
       intro: sanitize(body.intro),
     };
 
-    // Optional single-value fields
+    // Optional fields
     const optionalFields = [
       "phoneNumber",
       "jobRoleId",
@@ -109,32 +225,61 @@ async function createProfile(request, response) {
       "abn",
       "registrationNumber",
     ];
-    optionalFields.forEach((field) => {
-      if (body[field]) updatedProfile[field] = sanitize(body[field]);
-    });
 
-    // Optional array fields
-    const arrayFields = ["skills", "certifications", "certificationFiles", "tools"];
-    arrayFields.forEach((field) => {
-      if (Array.isArray(body[field])) {
-        updatedProfile[field] = body[field].map(sanitize);
+    optionalFields.forEach((field) => {
+      const value = body[field];
+
+      if (value !== undefined) {
+        if (value === "" || value === null) {
+          updatedProfile[field] = null; // Clear from DB
+        } else {
+          updatedProfile[field] = sanitize(value);
+        }
       }
     });
 
-    // Optional avatar (nested)
+    // Optional arrays
+    const arrayFields = ["skills", "certifications", "certificationFiles", "tools"];
+    arrayFields.forEach((field) => {
+      const value = body[field];
+      if (Array.isArray(value)) {
+        updatedProfile[field] = value.map(sanitize);
+      } else if (value === "" || value === null) {
+        updatedProfile[field] = []; // clear empty array
+      }
+    });
+
+    // Avatar
     if (body.avatar?.fileName) {
       updatedProfile.avatar = sanitize(body.avatar.fileName);
     }
 
-    // Handle experienceLevel
+    // Experience level
     const validLevels = ["beginner", "intermediate", "expert"];
-    if (validLevels.includes(body.experienceLevel)) {
-      updatedProfile.experienceLevel = sanitize(body.experienceLevel);
+    if (body.experienceLevel !== undefined) {
+      if (validLevels.includes(body.experienceLevel)) {
+        updatedProfile.experienceLevel = sanitize(body.experienceLevel);
+      } else {
+        updatedProfile.experienceLevel = null; // invalid/cleared
+      }
     }
 
-    // Profile Percentage Calculation
-    let profilePercentage = 0;
-    const percentageMap = [
+    // Role-based profile percentage
+    const percentageMapBuilder = [
+      { field: "companyName", points: 10 },
+      { field: "address", points: 10 },
+      { field: "phoneNumber", points: 10 },
+      { field: "intro", points: 5 },
+      { field: "abn", points: 10 },
+      { field: "registrationNumber", points: 50 },
+      { field: "websiteLink", points: 1 },
+      { field: "facebookLink", points: 1 },
+      { field: "instagramLink", points: 1 },
+      { field: "linkedinLink", points: 1 },
+      { field: "tiktokLink", points: 1 },
+    ];
+
+    const percentageMapTradie = [
       { field: "address", points: 10 },
       { field: "phoneNumber", points: 10 },
       { field: "jobRoleId", points: 30 },
@@ -150,15 +295,25 @@ async function createProfile(request, response) {
       { field: "tiktokLink", points: 1 },
     ];
 
+    const percentageMap = roleName === "Builder" ? percentageMapBuilder : percentageMapTradie;
+
+    let profilePercentage = 0;
+
     for (const item of percentageMap) {
       const value = body[item.field];
 
-      if (item.type === "array" && Array.isArray(value) && value.length > 0) {
-        profilePercentage += item.points;
-      } else if (item.type === "enum" && item.valid.includes(value)) {
-        profilePercentage += item.points;
-      } else if (!item.type && value) {
-        profilePercentage += item.points;
+      if (item.type === "array") {
+        if (Array.isArray(value) && value.length > 0) {
+          profilePercentage += item.points;
+        }
+      } else if (item.type === "enum") {
+        if (item.valid.includes(value)) {
+          profilePercentage += item.points;
+        }
+      } else {
+        if (value && value !== "") {
+          profilePercentage += item.points;
+        }
       }
     }
 
@@ -170,10 +325,6 @@ async function createProfile(request, response) {
       { $set: updatedProfile },
       { new: true }
     );
-
-    if (!result) {
-      return sendResponse(response, "createProfile", 422, 0, "User not found");
-    }
 
     return sendResponse(
       response,
@@ -188,8 +339,6 @@ async function createProfile(request, response) {
     return sendResponse(response, "createProfile", 500, 0, "Something went wrong");
   }
 }
-
-
 
 async function getProfile(request, response) {
   try {
