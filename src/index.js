@@ -26,6 +26,7 @@ let fundPricesRoutes = require("./routes/funds/index");
 let mabrurProductRoutes = require("./routes/mabrurProducts/index");
 let formRoutes = require("./routes/forms/index");
 let customerRoutes = require("./routes/customer/index");
+let subscriptionRoutes = require("./routes/subscriptions/index");
 let notificationRoutes = require("./routes/notifications/index");
 let teamMemberRoutes = require("./routes/teamMembers/index");
 let bookCallRoutes = require("./routes/bookCall/index");
@@ -58,6 +59,9 @@ app.use("/auth/", authRoutes);
 
 // OTP Routes
 app.use("/otp/", optRoutes);
+
+// Product Routes
+app.use("/subscriptions/", subscriptionRoutes);
 
 // Product Routes
 app.use("/products/", productRoutes);
