@@ -11,7 +11,7 @@ const NotificationStatusModel = require("../../models/NotificationStatus");
 const SingleNotificationModel = require("../../models/SingleNotification");
 const ComplaintTypesModel = require("../../models/ComplaintTypes");
 const SettingModel = require("../../models/Settings");
-const JobRolesModel = require("../../models/JobRoles");
+const TradesModel = require("../../models/Trades");
 const {
   filterPolicies,
 } = require("../../controllers/Customer/CustomerController");
@@ -23,7 +23,6 @@ const {
   authenticate,
   getPolicyDetails,
 } = require("../../helpers/utils");
-const JobRoles = require("../../models/JobRoles");
 
 // module name
 let moduleName;
@@ -369,7 +368,7 @@ async function getAllConfigurations(request, response) {
     // });
     // data.notifications.unreadCount = unreadCount || 0;
 
-    let JobRolesData = await JobRolesModel.find({
+    let JobRolesData = await TradesModel.find({
       status: "active",
     });
     if (JobRolesData) {

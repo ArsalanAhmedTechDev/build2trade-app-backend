@@ -14,10 +14,10 @@ const { sendResponse, checkKeysExist } = require("../../helpers/utils");
 const moduleName = "Subscriptions";
 
 module.exports = {
-  getById,
+  // getById,
   getAll,
-  create,
-  update,
+  // create,
+  // update,
 };
 /** Get record by Id **/
 // async function getById(request, response) {

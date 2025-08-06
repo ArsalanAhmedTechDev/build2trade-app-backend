@@ -38,4 +38,4 @@ const defaultSchema = new Schema(
 
 /** change below collection name according to the server **/
 
-module.exports = model("JobRole", defaultSchema, "jobRoles");
+module.exports = model("Trade", defaultSchema, "trades");

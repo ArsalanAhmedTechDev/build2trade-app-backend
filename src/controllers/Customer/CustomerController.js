@@ -35,6 +35,7 @@ let moduleName;
 let responseMsgs;
 
 var lang = "english";
+var channel = "web";
 const coreAPIUrl = process.env.CORE_API_URL;
 
 // const sendEmail = require("../../helpers/send-email-test");
@@ -61,142 +62,77 @@ module.exports = {
  * @access  Private (Assumes user is authenticated)
  *
  * @request
- * {
- *   companyName: "Tech Inc",
- *   phoneNumber: "03001234567", // optional
- *   jobRoleId: "64eae8c1234f..." // optional
- *   address: "Lahore, Pakistan",
- *   intro: "We are a tech company...",
- *   skills: ["JavaScript", "React"], // optional
- *   certifications: ["AWS", "Scrum Master"], // optional
- *   tools: ["Figma", "Jira"], // optional
- *   experienceLevel: "expert", // optional
- *   websiteLink: "https://example.com", // optional
- *   facebookLink: "...", instagramLink: "...", linkedinLink: "...",
- *   xLink: "...", tiktokLink: "...", // all optional
- *   abn: "12345678901", // optional
- *   registrationNumber: "REG-2024-4567" // optional
- * }
+// Builder Create Profile Payload
+{
+    "roleName": "Builder",
+    "companyName": "ABC Builders Pvt Ltd",
+    "phoneNumber": "0400000000",
+    "street": "123 Builder Street, Melbourne",
+    "postCode": "3000",
+    "suburb": "Southbank",
+    "state": "VIC",
+    "insurancePolicyNumber": "INS-12345678",
+    "abn": "12345678901",
+    "insurancePolicyFileUrl": "https://cdn.example.com/docs/builder_insurance.pdf",
+    "websiteLink": "https://abcbuilders.com.au",
+    "facebookLink": "https://facebook.com/abcbuilders",
+    "instagramLink": "https://instagram.com/abcbuilders",
+    "linkedinLink": "https://linkedin.com/company/abcbuilders",
+    "tiktokLink": "https://tiktok.com/@abcbuilders",
+    "avatar": {
+        "fileName": "https://cdn.example.com/avatars/builder123.jpg"
+    }
+}
+
+
+// Tradie Create Profile Payload
+{
+    "roleName": "Tradie",
+    "companyName": "TradiePro Services",
+    "street": "45 Trades Lane, Sydney",
+    "postCode": "2000",
+    "suburb": "Parramatta",
+    "state": "NSW",
+    "insurancePolicyNumber": "TRADE-98765432",
+    "abn": "98765432100",
+    "insurancePolicyFileUrl": "https://cdn.example.com/docs/tradie_insurance.pdf",
+    "intro": "Expert tradies for residential and commercial jobs.",
+    "phoneNumber": "0411000000",
+    "tardeId": "688a0a5899876e3055471702",
+    "experienceLevel": "3+ years",
+    "websiteLink": "https://tradiepro.com.au",
+    "facebookLink": "https://facebook.com/tradiepro",
+    "instagramLink": "https://instagram.com/tradiepro",
+    "linkedinLink": "https://linkedin.com/company/tradiepro",
+    "tiktokLink": "https://tiktok.com/@tradiepro",
+    "avatar": {
+        "fileName": "https://cdn.example.com/avatars/tradie123.jpg"
+    },
+    "certificationFiles": [
+        "https://cdn.example.com/certificates/tradie_cert1.pdf",
+        "https://cdn.example.com/certificates/tradie_cert2.pdf"
+    ]
+}
  */
-
-// async function createProfile(request, response) {
-//   try {
-//     const userId = request.user?._id;
-//     const body = request.body;
-
-//     // Required fields
-//     const requiredFields = ["companyName", "address", "intro"];
-//     const missingKeys = await checkKeysExist(body, requiredFields);
-//     if (missingKeys) {
-//       return sendResponse(response, "createProfile", 422, 0, missingKeys);
-//     }
-
-//     const updatedProfile = {
-//       companyName: sanitize(body.companyName),
-//       address: sanitize(body.address),
-//       intro: sanitize(body.intro),
-//     };
-
-//     // Optional single-value fields
-//     const optionalFields = [
-//       "phoneNumber",
-//       "jobRoleId",
-//       "websiteLink",
-//       "facebookLink",
-//       "instagramLink",
-//       "linkedinLink",
-//       "tiktokLink",
-//       "abn",
-//       "registrationNumber",
-//     ];
-//     optionalFields.forEach((field) => {
-//       if (body[field]) updatedProfile[field] = sanitize(body[field]);
-//     });
-
-//     // Optional array fields
-//     const arrayFields = ["skills", "certifications", "certificationFiles", "tools"];
-//     arrayFields.forEach((field) => {
-//       if (Array.isArray(body[field])) {
-//         updatedProfile[field] = body[field].map(sanitize);
-//       }
-//     });
-
-//     // Optional avatar (nested)
-//     if (body.avatar?.fileName) {
-//       updatedProfile.avatar = sanitize(body.avatar.fileName);
-//     }
-
-//     // Handle experienceLevel
-//     const validLevels = ["beginner", "intermediate", "expert"];
-//     if (validLevels.includes(body.experienceLevel)) {
-//       updatedProfile.experienceLevel = sanitize(body.experienceLevel);
-//     }
-
-//     // Profile Percentage Calculation
-//     let profilePercentage = 0;
-//     const percentageMap = [
-//       { field: "address", points: 10 },
-//       { field: "phoneNumber", points: 10 },
-//       { field: "jobRoleId", points: 30 },
-//       { field: "skills", type: "array", points: 10 },
-//       { field: "certifications", type: "array", points: 10 },
-//       { field: "tools", type: "array", points: 10 },
-//       { field: "experienceLevel", type: "enum", valid: validLevels, points: 10 },
-//       { field: "abn", points: 5 },
-//       { field: "websiteLink", points: 1 },
-//       { field: "facebookLink", points: 1 },
-//       { field: "instagramLink", points: 1 },
-//       { field: "linkedinLink", points: 1 },
-//       { field: "tiktokLink", points: 1 },
-//     ];
-
-//     for (const item of percentageMap) {
-//       const value = body[item.field];
-
-//       if (item.type === "array" && Array.isArray(value) && value.length > 0) {
-//         profilePercentage += item.points;
-//       } else if (item.type === "enum" && item.valid.includes(value)) {
-//         profilePercentage += item.points;
-//       } else if (!item.type && value) {
-//         profilePercentage += item.points;
-//       }
-//     }
-
-//     updatedProfile.profilePercentage = profilePercentage;
-
-//     // Save to DB
-//     const result = await CustomerModel.findByIdAndUpdate(
-//       userId,
-//       { $set: updatedProfile },
-//       { new: true }
-//     );
-
-//     if (!result) {
-//       return sendResponse(response, "createProfile", 422, 0, "User not found");
-//     }
-
-//     return sendResponse(
-//       response,
-//       "createProfile",
-//       200,
-//       1,
-//       "Profile updated successfully",
-//       result
-//     );
-//   } catch (error) {
-//     console.error("--- createProfile error ---", error);
-//     return sendResponse(response, "createProfile", 500, 0, "Something went wrong");
-//   }
-// }
 
 async function createProfile(request, response) {
   try {
+    channel = request.header("channel") ? request.header("channel") : lang;
     const userId = request.user?._id;
     const body = request.body;
     const roleName = body.roleName;
 
     // Required fields
-    const requiredFields = ["companyName", "address", "intro"];
+    const requiredFields = [
+      "companyName",
+      "street",
+      "postCode",
+      "state",
+      "suburb",
+      "state",
+      "insurancePolicyNumber",
+      "abn",
+    ];
     const missingKeys = await checkKeysExist(body, requiredFields);
     if (missingKeys) {
       return sendResponse(response, "createProfile", 422, 0, missingKeys);
@@ -209,21 +145,25 @@ async function createProfile(request, response) {
 
     const updatedProfile = {
       companyName: sanitize(body.companyName),
-      address: sanitize(body.address),
-      intro: sanitize(body.intro),
+      street: sanitize(body.street),
+      postCode: sanitize(body.postCode),
+      suburb: sanitize(body.suburb),
+      state: sanitize(body.state),
+      insurancePolicyNumber: sanitize(body.insurancePolicyNumber),
+      abn: sanitize(body.abn),
     };
-
+3
     // Optional fields
     const optionalFields = [
+      "insurancePolicyFileUrl",
+      "intro",
       "phoneNumber",
-      "jobRoleId",
+      "tardeId",
       "websiteLink",
       "facebookLink",
       "instagramLink",
       "linkedinLink",
       "tiktokLink",
-      "abn",
-      "registrationNumber",
     ];
 
     optionalFields.forEach((field) => {
@@ -239,7 +179,7 @@ async function createProfile(request, response) {
     });
 
     // Optional arrays
-    const arrayFields = ["skills", "certifications", "certificationFiles", "tools"];
+    const arrayFields = ["certificationFiles"];
     arrayFields.forEach((field) => {
       const value = body[field];
       if (Array.isArray(value)) {
@@ -255,7 +195,7 @@ async function createProfile(request, response) {
     }
 
     // Experience level
-    const validLevels = ["beginner", "intermediate", "expert"];
+    const validLevels = ["1+ years", "3+ years", "8+ years"];
     if (body.experienceLevel !== undefined) {
       if (validLevels.includes(body.experienceLevel)) {
         updatedProfile.experienceLevel = sanitize(body.experienceLevel);
@@ -267,26 +207,12 @@ async function createProfile(request, response) {
     // Role-based profile percentage
     const percentageMapBuilder = [
       { field: "companyName", points: 10 },
-      { field: "address", points: 10 },
-      { field: "phoneNumber", points: 10 },
-      { field: "intro", points: 5 },
-      { field: "abn", points: 10 },
-      { field: "registrationNumber", points: 50 },
-      { field: "websiteLink", points: 1 },
-      { field: "facebookLink", points: 1 },
-      { field: "instagramLink", points: 1 },
-      { field: "linkedinLink", points: 1 },
-      { field: "tiktokLink", points: 1 },
-    ];
-
-    const percentageMapTradie = [
-      { field: "address", points: 10 },
-      { field: "phoneNumber", points: 10 },
-      { field: "jobRoleId", points: 30 },
-      { field: "skills", type: "array", points: 10 },
-      { field: "certifications", type: "array", points: 10 },
-      { field: "tools", type: "array", points: 10 },
-      { field: "experienceLevel", type: "enum", valid: validLevels, points: 10 },
+      { field: "street", points: 10 },
+      { field: "phoneNumber", points: 20 },
+      { field: "insurancePolicyNumber", points: 20 },
+      { field: "postCode", points: 10 },
+      { field: "suburb", points: 10 },
+      { field: "state", points: 10 },
       { field: "abn", points: 5 },
       { field: "websiteLink", points: 1 },
       { field: "facebookLink", points: 1 },
@@ -295,13 +221,38 @@ async function createProfile(request, response) {
       { field: "tiktokLink", points: 1 },
     ];
 
-    const percentageMap = roleName === "Builder" ? percentageMapBuilder : percentageMapTradie;
+    const percentageMapTradie = [
+      { field: "companyName", points: 10 },
+      { field: "street", points: 10 },
+      { field: "phoneNumber", points: 10 },
+      { field: "tardeId", points: 20 },
+      { field: "insurancePolicyNumber", points: 15 },
+      // { field: "certifications", type: "array", points: 10 },
+      {
+        field: "experienceLevel",
+        type: "enum",
+        valid: validLevels,
+        points: 10,
+      },
+      { field: "postCode", points: 5 },
+      { field: "suburb", points: 5 },
+      { field: "state", points: 5 },
+      { field: "abn", points: 5 },
+      { field: "websiteLink", points: 1 },
+      { field: "facebookLink", points: 1 },
+      { field: "instagramLink", points: 1 },
+      { field: "linkedinLink", points: 1 },
+      { field: "tiktokLink", points: 1 },
+    ];
+
+    const percentageMap =
+      roleName === "Builder" ? percentageMapBuilder : percentageMapTradie;
 
     let profilePercentage = 0;
 
     for (const item of percentageMap) {
       const value = body[item.field];
-
+      // console.log("item", item, value)
       if (item.type === "array") {
         if (Array.isArray(value) && value.length > 0) {
           profilePercentage += item.points;
@@ -336,7 +287,13 @@ async function createProfile(request, response) {
     );
   } catch (error) {
     console.error("--- createProfile error ---", error);
-    return sendResponse(response, "createProfile", 500, 0, "Something went wrong");
+    return sendResponse(
+      response,
+      "createProfile",
+      500,
+      0,
+      "Something went wrong"
+    );
   }
 }
 

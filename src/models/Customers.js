@@ -55,10 +55,10 @@ const userSchema = new Schema(
     password: {
       type: String,
     },
-    jobRoleId: {
+    tradeId: {
       type: ObjectId,
       required: false,
-      ref: "jobRole",
+      ref: "trade",
     },
     roleId: {
       type: ObjectId,
@@ -77,10 +77,6 @@ const userSchema = new Schema(
         default: null,
       },
     },
-    address: {
-      type: String,
-      required: false,
-    },
     isPhoneNumberValidated: {
       type: Boolean,
       default: false,
@@ -93,33 +89,51 @@ const userSchema = new Schema(
       type: String,
       required: false,
     },
+    street: {
+      type: String,
+      required: false,
+    },
+    postCode: {
+      type: String,
+      required: false,
+    },
+    suburb: {
+      type: String,
+      required: false,
+    },
+    state: {
+      type: String,
+      required: false,
+    },
     intro: {
       type: String,
       default: null,
       maxlength: 2000,
     },
-    skills: {
-      type: [String], // 👈 Array of strings
-      default: [], // 👈 Default empty array
-      validate: [arrayLimit, "{PATH} exceeds the limit of 10 items"],
+    insurancePolicyNumber: {
+      type: String,
+      required: false,
     },
-    certifications: {
-      type: [String], // 👈 Array of strings
-      default: [], // 👈 Default empty array
-      validate: [arrayLimit, "{PATH} exceeds the limit of 10 items"],
+    insurancePolicyFileUrl: {
+      type: String,
+      required: false,
+    },
+    abn: {
+      type: String,
+      required: false,
     },
     certificationFiles: {
       type: [String],
       default: [],
     },
-    tools: {
-      type: [String], // 👈 Array of strings
-      default: [], // 👈 Default empty array
-      validate: [arrayLimit, "{PATH} exceeds the limit of 10 items"],
-    },
+    // tools: {
+    //   type: [String], // 👈 Array of strings
+    //   default: [], // 👈 Default empty array
+    //   validate: [arrayLimit, "{PATH} exceeds the limit of 10 items"],
+    // },
     experienceLevel: {
       type: String,
-      enum: ["", "beginner", "intermediate", "expert"],
+      enum: ["", "1+ years", "3+ years", "8+ years"],
       default: "",
     },
     notifications: {
@@ -174,14 +188,6 @@ const userSchema = new Schema(
       default: null,
       maxlength: 1000,
     },
-    registrationNumber: {
-      type: String,
-      required: false,
-    },
-    abn: {
-      type: String,
-      required: false,
-    },
     profilePercentage: {
       type: Number,
       default: 0,
@@ -217,6 +223,13 @@ userSchema.virtual("avatarUrl").get(function () {
 userSchema.virtual("role", {
   ref: "Role",
   localField: "roleId",
+  foreignField: "_id",
+  justOne: true,
+});
+
+userSchema.virtual("trade", {
+  ref: "Trade",
+  localField: "tradeId",
   foreignField: "_id",
   justOne: true,
 });
