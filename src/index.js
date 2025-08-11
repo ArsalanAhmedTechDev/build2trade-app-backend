@@ -19,6 +19,7 @@ app.use(xss());
 
 // routes
 let authRoutes = require("./routes/auth/index");
+let projectRoutes = require("./routes/projects/index");
 let optRoutes = require("./routes/otp/index");
 let productRoutes = require("./routes/product/index");
 let fmrRoutes = require("./routes/fundManagerReport/index");
@@ -56,6 +57,9 @@ require("./config/database")();
 /** --- API ROUTES --- **/
 // Authentication Routes
 app.use("/auth/", authRoutes);
+
+// Project Routes 
+app.use("/projects/", projectRoutes);
 
 // OTP Routes
 app.use("/otp/", optRoutes);
