@@ -12,6 +12,7 @@ const SingleNotificationModel = require("../../models/SingleNotification");
 const ComplaintTypesModel = require("../../models/ComplaintTypes");
 const SettingModel = require("../../models/Settings");
 const TradesModel = require("../../models/Trades");
+const SubTradesModel = require("../../models/SubTrades");
 const {
   filterPolicies,
 } = require("../../controllers/Customer/CustomerController");
@@ -347,56 +348,61 @@ async function getAllConfigurations(request, response) {
   try {
     console.log("ALL LISTING API...............");
 
-    // lang = request.header("lang") ? request.header("lang") : lang;
-    // const userId = request.user._id;
     const data = {
       notifications: {
         unreadCount: 0,
       },
-      jobRolesDropdown: [],
+      tradesDropdown: [],
+      tradesWithSubTrades: [],
     };
 
-    // // Get the start of today//
-    // const startOfToday = new Date();
-    // startOfToday.setHours(0, 0, 0, 0);
-
-    // // Query to count unread notifications for the "New" section
-    // const unreadCount = await NotificationStatusModel.countDocuments({
-    //   userId: new ObjectId(userId),
-    //   readStatus: false,
-    //   createdAt: { $gte: startOfToday }, // Created today
-    // });
-    // data.notifications.unreadCount = unreadCount || 0;
-
-    let JobRolesData = await TradesModel.find({
+    // Get trades
+    let TradesData = await TradesModel.find({
       status: "active",
     });
-    if (JobRolesData) {
-      data.jobRolesDropdown = JobRolesData.map((item) => ({
-        label: item.title, // Dynamically access the title property using the lang variable
+
+    if (TradesData && TradesData.length) {
+      // TradesDropdown as it is
+      data.tradesDropdown = TradesData.map((item) => ({
+        label: item.title,
         value: item._id,
       }));
-    }
 
-    if (data) {
-      return sendResponse(
-        response,
-        moduleName,
-        200,
-        1,
-        // responseMsgs.recordFetched,
-        "Configurations fetched successfully",
-        data
+      // TradesWithSubTrades
+      const tradesWithSubTrades = await Promise.all(
+        TradesData.map(async (trade) => {
+          const subTrades = await SubTradesModel.find({
+            tradeId: trade._id,
+            status: "active",
+            $or: [
+              { type: "manual" },
+              { createdBy: request.user._id }
+            ]
+          });
+
+          return {
+            type: trade.type,
+            label: trade.title,
+            value: trade._id,
+            subTrades: subTrades.map((sub) => ({
+              type: sub.type,
+              label: sub.title,
+              value: sub._id,
+            })),
+          };
+        })
       );
+
+      data.tradesWithSubTrades = tradesWithSubTrades;
     }
 
     return sendResponse(
       response,
       moduleName,
-      500,
-      0,
-      "Configurations not found"
-      // responseMsgs.recordNotFound
+      200,
+      1,
+      "Configurations fetched successfully",
+      data
     );
   } catch (error) {
     console.log("--- Get All Configurations API Error ---", error);
@@ -406,7 +412,6 @@ async function getAllConfigurations(request, response) {
       500,
       0,
       "Something went wrong, please try again later."
-      // responseMsgs.error_500
     );
   }
 }
